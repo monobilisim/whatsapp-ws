@@ -1,0 +1,7 @@
+*.db
+*.bak
+*.json
+*.png
+*.jpe
+*_bin
+mdtest

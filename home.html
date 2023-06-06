@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Chat Example</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="text-center">Chat Example</h1>
+            </div>
+        </div>
+        <div class="row mt-4">
+            <div class="col-12">
+                <div id="log" class="border rounded" style="height: 400px; overflow-y: auto; padding: 15px;"></div>
+            </div>
+        </div>
+        <form id="form" class="mt-4">
+            <div class="form-row">
+                <div class="col-8">
+                    <textarea id="msg" class="form-control" rows="2"></textarea>
+                </div>
+                <div class="col-4">
+                    <input type="text" id="jid" class="form-control" value="90111111111@s.whatsapp.net"
+                        placeholder="JID">
+                </div>
+            </div>
+            <div class="form-row mt-2">
+                <div class="col-6">
+                    <button type="submit" class="btn btn-primary btn-block">Send</button>
+                </div>
+                <div class="col-6">
+                    <button id="checkuser" type="button" class="btn btn-secondary btn-block">Check User</button>
+                </div>
+            </div>
+        </form>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const msg = document.getElementById("msg");
+            const log = document.getElementById("log");
+            const jid = document.getElementById("jid");
+            const form = document.getElementById("form");
+            const checkUserButton = document.getElementById("checkuser");
+
+            let conn;
+
+            const appendLog = (item) => {
+                const doScroll = log.scrollTop > log.scrollHeight - log.clientHeight - 1;
+                log.appendChild(item);
+                if (doScroll) {
+                    log.scrollTop = log.scrollHeight - log.clientHeight;
+                }
+            };
+
+            form.addEventListener("submit", (event) => {
+                event.preventDefault();
+
+                if (!conn || !msg.value) {
+                    return;
+                }
+
+                const message = `send ${jid.value} ${msg.value}`;
+                console.log(message);
+                conn.send(message);
+                msg.value = "";
+            });
+
+            checkUserButton.addEventListener("click", () => {
+                if (!conn || !jid.value) {
+                    return;
+                }
+                const message = `checkuser ${jid.value}`;
+                console.log(message);
+                conn.send(message);
+            });
+
+            if (window["WebSocket"]) {
+                conn = new WebSocket("ws://localhost:7000/ws");
+                conn.onclose = (evt) => {
+                    const item = document.createElement("div");
+                    item.innerHTML = "<b>Connection closed.</b>";
+                    appendLog(item);
+                };
+                conn.onmessage = (evt) => {
+                    const messages = evt.data.split('\n');
+                    console.log(messages);
+
+                    for (const message of messages) {
+                        let error = 0;
+                        const item = document.createElement("div");
+                        const json = JSON.parse(message);
+                        let type = "text";
+
+                        if (json.Type) {
+                            type = json.Type.split("/")[0];
+                        }
+
+                        if (json.Vcard) {
+                            type = "contact";
+                        }
+
+                        if (json.Address) {
+                            type = "location";
+                        }
+
+                        switch (type) {
+                            case "text":
+                                item.innerText = json.Text;
+                                break;
+                            case "image":
+                                item.innerHTML = `<img src="data:${json.Type};base64,${json.Content}" width="200" height="200">`;
+                                break;
+                            case "audio":
+                                item.innerHTML = `<audio controls src="data:${json.Type};base64,${json.Content}"></audio>`;
+                                break;
+                            case "video":
+                                item.innerHTML = `<video controls><source type="${json.Type}" src="data:${json.Type};base64,${json.Content}"></video>`;
+                                break;
+                            case "application":
+                                item.innerHTML = `<a href="data:${json.Type};base64,${json.Content}" download="${json.FileName}">${json.FileName}</a>`;
+                                break;
+                            case "contact":
+                                const vcard = json.Vcard.split('\n');
+                                item.innerText = `${vcard[3].split(':')[1]} - ${vcard[4].split(':')[1]}`;
+                                break;
+                            case "location":
+                                item.innerHTML = `<a href="http://maps.google.com/?q=${json.DegreesLatitude},${json.DegreesLongitude}"> <img src="data:image/jpeg;base64,${json.JpegThumbnail}" width="200" height="200"></a>`;
+                                break;
+                            default:
+                                console.log("ERROR", json);
+                                error = 1;
+                        }
+                        if (!error) {
+                            item.setAttribute("align", json.Info.FromMe ? "right" : "left");
+                            appendLog(item);
+                        }
+                    }
+                };
+            } else {
+                const item = document.createElement("div");
+                item.innerHTML = "<b>Your browser does not support WebSockets.</b>";
+                appendLog(item);
+            }
+        });
+    </script>
+</body>
+
+</html>
