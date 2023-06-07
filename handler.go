@@ -16,6 +16,12 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+type Message struct {
+    Jid string
+    Body string
+    Sent bool
+}
+
 func handleCmd(cmd string, args []string) {
 	switch cmd {
 	case "isloggedin":
@@ -166,6 +172,9 @@ func handleMessage(evt *events.Message) {
 	if err := insertLastMessages(evt.Info.ID, cli.Store.ID.String(), remotejid, evt.Info.Type, msgContent, evt.Info.Timestamp, evt.Info.MessageSource.IsFromMe); err != nil {
 		log.Errorf("Failed to insert last messages: %v", err)
 	}
+
+    m := Message{remotejid, msgContent, evt.Info.MessageSource.IsFromMe}
+	wsConn.WriteJSON(m)
 }
 
 func handleReceipt(evt *events.Receipt) {
@@ -293,6 +302,9 @@ func handleSendMessage(args []string) {
 	if err := insertLastMessages(resp.ID, cli.Store.ID.String(), recipient.String(), "text", msg.GetConversation(), resp.Timestamp, true); err != nil {
 		log.Errorf("Error inserting last messages: %v", err)
 	}
+
+    m := Message{recipient.String(), msg.GetConversation(), true}
+	wsConn.WriteJSON(m)
 }
 
 // Parse a JID from a string. If the string starts with a +, it is removed.
