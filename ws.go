@@ -46,7 +46,9 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 
 func serveStatus(w http.ResponseWriter, r *http.Request) {
 	if cli.IsLoggedIn() {
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(cli.Store.ID.String()))
 		return
 	}
 	w.WriteHeader(http.StatusNotFound)

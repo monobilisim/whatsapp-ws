@@ -135,7 +135,7 @@ func main() {
 		}()
 	}
 
-	cli.AddEventHandler(handler)
+	cli.AddEventHandler(eventHandler)
 	err = cli.Connect()
 	if err != nil {
 		log.Errorf("Failed to connect: %v", err)
