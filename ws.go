@@ -44,6 +44,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// ServeStatus returns the current status of the client
 func serveStatus(w http.ResponseWriter, r *http.Request) {
 	if cli.IsLoggedIn() {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
@@ -54,6 +55,7 @@ func serveStatus(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotFound)
 }
 
+// Parse command, return command and arguments
 func parseCmd(cmd string) (string, []string, error) {
 	tokens := strings.Fields(cmd)
 
