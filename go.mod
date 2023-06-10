@@ -5,6 +5,9 @@ go 1.19
 require (
 	github.com/fatih/structs v1.1.0
 	github.com/gorilla/websocket v1.5.0
+	github.com/lib/pq v1.10.9
+	github.com/mattn/go-sqlite3 v1.14.17
+	github.com/mdp/qrterminal/v3 v3.1.1
 	github.com/minio/minio-go/v7 v7.0.56
 	go.mau.fi/whatsmeow v0.0.0-20230505084412-9c004199cc79
 	google.golang.org/protobuf v1.30.0
@@ -29,4 +32,5 @@ require (
 	golang.org/x/sys v0.8.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
+	rsc.io/qr v0.2.0 // indirect
 )

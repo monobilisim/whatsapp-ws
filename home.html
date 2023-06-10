@@ -81,7 +81,7 @@
             });
 
             if (window["WebSocket"]) {
-                conn = new WebSocket("ws://localhost:7000/ws");
+                conn = new WebSocket("ws://localhost:7010/ws");
                 conn.onclose = (evt) => {
                     const item = document.createElement("div");
                     item.innerHTML = "<b>Connection closed.</b>";

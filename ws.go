@@ -57,6 +57,7 @@ func serveStatus(w http.ResponseWriter, r *http.Request) {
 
 // Parse command, return command and arguments
 func parseCmd(cmd string) (string, []string, error) {
+	cmd = strings.Replace(cmd, "\n", `\n`, -1)
 	tokens := strings.Fields(cmd)
 
 	if len(tokens) < 2 {
@@ -66,12 +67,17 @@ func parseCmd(cmd string) (string, []string, error) {
 	command := strings.ToLower(tokens[0])
 	args := tokens[1:]
 
+	// make \n a newline
+	for i, arg := range args {
+		args[i] = strings.Replace(arg, `\n`, "\n", -1)
+	}
+
 	return command, args, nil
 }
 
 func handleWsCmd(cmd string) {
 	command, args, err := parseCmd(cmd)
-
+	log.Infof("Command: %s, Args: %v", command, args)
 	if err != nil {
 		log.Errorf(err.Error())
 		return
