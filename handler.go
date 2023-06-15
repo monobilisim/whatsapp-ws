@@ -17,19 +17,19 @@ import (
 )
 
 type Message struct {
-    Jid string
-    Body string
-    Sent bool
+	Jid  string
+	Body string
+	Sent bool
 }
 
-func handleCmd(cmd string, args []string) {
-	switch cmd {
+func handleCmd(cmd Command) {
+	switch cmd.Cmd {
 	case "isloggedin":
 		handleIsLoggedIn()
 	case "checkuser":
-		handleCheckUser(args)
+		handleCheckUser(cmd.Args)
 	case "send":
-		handleSendMessage(args)
+		handleSendMessage(cmd.Args)
 	}
 }
 
@@ -173,7 +173,7 @@ func handleMessage(evt *events.Message) {
 		log.Errorf("Failed to insert last messages: %v", err)
 	}
 
-    m := Message{remotejid, msgContent, evt.Info.MessageSource.IsFromMe}
+	m := Message{remotejid, msgContent, evt.Info.MessageSource.IsFromMe}
 	wsConn.WriteJSON(m)
 }
 
@@ -243,13 +243,13 @@ func handleIsLoggedIn() {
 	log.Infof("Logged in: %t", cli.IsLoggedIn())
 }
 
-func handleCheckUser(args []string) {
-	if len(args) < 1 {
+func handleCheckUser(params []string) {
+	if len(params) < 1 {
 		log.Errorf("Usage: checkuser <phone numbers...>")
 		return
 	}
 
-	resp, err := cli.IsOnWhatsApp(args)
+	resp, err := cli.IsOnWhatsApp(params)
 	if err != nil {
 		log.Errorf("Failed to check if users are on WhatsApp: %v", err)
 		return
@@ -303,7 +303,7 @@ func handleSendMessage(args []string) {
 		log.Errorf("Error inserting last messages: %v", err)
 	}
 
-    m := Message{recipient.String(), msg.GetConversation(), true}
+	m := Message{recipient.String(), msg.GetConversation(), true}
 	wsConn.WriteJSON(m)
 }
 

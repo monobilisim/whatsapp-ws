@@ -142,7 +142,7 @@ func main() {
 		return
 	}
 
-	c := make(chan os.Signal)
+	c := make(chan os.Signal, 1)
 	input := make(chan string)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
@@ -176,10 +176,15 @@ func main() {
 				}
 				continue
 			}
+			var command Command
 			args := strings.Fields(cmd)
-			cmd = args[0]
-			args = args[1:]
-			go handleCmd(strings.ToLower(cmd), args)
+			if len(args) == 0 {
+				continue
+			}
+			command.Cmd = strings.ToLower(args[0])
+			command.Args = args[1:]
+
+			go handleCmd(command)
 		}
 	}
 }
