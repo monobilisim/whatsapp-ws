@@ -52,7 +52,7 @@ func serveStatus(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(cli.Store.ID.String()))
 		return
 	}
-	w.WriteHeader(http.StatusNotFound)
+	w.WriteHeader(http.StatusServiceUnavailable)
 }
 
 // Parse command, return command and arguments
