@@ -152,22 +152,29 @@ func handleMessage(evt *events.Message) {
         }
         log.Infof("Saved image in message to %s", path)
     }
+
     var msgContent string
 
     switch {
-    case evt.Message.GetConversation() != "":
-        msgContent = evt.Message.GetConversation()
-    case evt.Message.GetExtendedTextMessage() != nil:
-        msgContent = evt.Message.GetExtendedTextMessage().GetText()
-    case evt.Message.GetImageMessage() != nil:
-        msgContent = evt.Message.GetImageMessage().GetCaption()
-    case evt.Message.GetDocumentMessage() != nil:
-        msgContent = evt.Message.GetDocumentMessage().GetCaption()
-    case evt.Message.GetVideoMessage() != nil:
-        msgContent = evt.Message.GetVideoMessage().GetCaption()
+        case evt.Message.GetConversation() != "":
+            msgContent = evt.Message.GetConversation()
+        case evt.Message.GetExtendedTextMessage() != nil:
+            msgContent = evt.Message.GetExtendedTextMessage().GetText()
+        case evt.Message.GetImageMessage() != nil:
+            msgContent = evt.Message.GetImageMessage().GetCaption()
+        case evt.Message.GetDocumentMessage() != nil:
+            msgContent = evt.Message.GetDocumentMessage().GetCaption()
+        case evt.Message.GetVideoMessage() != nil:
+            msgContent = evt.Message.GetVideoMessage().GetCaption()
     }
 
     remoteJid := evt.Info.MessageSource.Chat.String()
+
+    if (evt.Info.Category == "peer") {
+        // Bunlar ilk login olunduğunda alınan sistem mesajları, veritabanına yazmayalım.
+        // Örn: [Main INFO] Received message 469474B7AB6166188B238F2AD94F5A65 from 905015301816@s.whatsapp.net (pushname: MAS Hukuk, timestamp: 2023-06-21 12:16:33 +0300 +03, type: text, category: peer): protocolMessage:{type:INITIAL_SECURITY_NOTIFICATION_SETTING_SYNC initialSecurityNotificationSettingSync:{securityNotificationEnabled:false}}
+        return;
+    }
 
     if err := insertMessages(evt.Info.ID, cli.Store.ID.String(), remoteJid, evt.Info.Type, msgContent, evt.Info.Timestamp, evt.Info.MessageSource.IsFromMe); err != nil {
         log.Errorf("Error inserting into messages: %v", err)
