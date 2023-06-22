@@ -137,6 +137,9 @@ func handleMessage(evt *events.Message) {
         }
     }
 
+    var extension string
+    var fileName string
+
     if img := evt.Message.GetImageMessage(); img != nil {
         data, err := cli.Download(img)
         if err != nil {
@@ -144,13 +147,41 @@ func handleMessage(evt *events.Message) {
             return
         }
         exts, _ := mime.ExtensionsByType(img.GetMimetype())
-        path := fmt.Sprintf("%s%s", evt.Info.ID, exts[0])
+        extension = exts[0]
+        path := fmt.Sprintf("%s%s", evt.Info.ID, extension)
         err = os.WriteFile(path, data, 0600)
+
+        path = fmt.Sprintf("%s%s", evt.Info.ID, ".jpg")
+        err = os.WriteFile(path, img.GetJpegThumbnail(), 0600)
+
         if err != nil {
             log.Errorf("Failed to save image: %v", err)
             return
         }
         log.Infof("Saved image in message to %s", path)
+    }
+
+    if doc := evt.Message.GetDocumentMessage(); doc != nil {
+        data, err := cli.Download(doc)
+        if err != nil {
+            log.Errorf("Failed to download document: %v", err)
+            return
+        }
+        exts, _ := mime.ExtensionsByType(doc.GetMimetype())
+        extension = exts[0]
+        path := fmt.Sprintf("%s%s", evt.Info.ID, extension)
+        err = os.WriteFile(path, data, 0600)
+
+        fileName = doc.GetFileName()
+
+        path = fmt.Sprintf("%s%s", evt.Info.ID, ".jpg")
+        err = os.WriteFile(path, doc.GetJpegThumbnail(), 0600)
+
+        if err != nil {
+            log.Errorf("Failed to save document: %v", err)
+            return
+        }
+        log.Infof("Saved document in message to %s", path)
     }
 
     var msgContent string
@@ -176,11 +207,11 @@ func handleMessage(evt *events.Message) {
         return;
     }
 
-    if err := insertMessages(evt.Info.ID, cli.Store.ID.String(), remoteJid, evt.Info.Type, msgContent, evt.Info.Timestamp, evt.Info.MessageSource.IsFromMe); err != nil {
+    if err := insertMessages(evt.Info.ID, cli.Store.ID.String(), remoteJid, evt.Info.Type, msgContent, evt.Info.Timestamp, evt.Info.MessageSource.IsFromMe, extension, fileName); err != nil {
         log.Errorf("Error inserting into messages: %v", err)
     }
 
-    if err := insertLastMessages(evt.Info.ID, cli.Store.ID.String(), remoteJid, evt.Info.Type, msgContent, evt.Info.Timestamp, evt.Info.MessageSource.IsFromMe); err != nil {
+    if err := insertLastMessages(evt.Info.ID, cli.Store.ID.String(), remoteJid, evt.Info.Type, msgContent, evt.Info.Timestamp, evt.Info.MessageSource.IsFromMe, extension, fileName); err != nil {
         log.Errorf("Error inserting into last_messages: %v", err)
     }
 
@@ -308,11 +339,11 @@ func handleSendMessage(args []string) {
 
     log.Infof("Message sent (server timestamp: %s)", resp.Timestamp)
 
-    if err := insertMessages(resp.ID, cli.Store.ID.String(), recipient.String(), "text", msg.GetConversation(), resp.Timestamp, true); err != nil {
+    if err := insertMessages(resp.ID, cli.Store.ID.String(), recipient.String(), "text", msg.GetConversation(), resp.Timestamp, true, "", ""); err != nil {
         log.Errorf("Error inserting into messages: %v", err)
     }
 
-    if err := insertLastMessages(resp.ID, cli.Store.ID.String(), recipient.String(), "text", msg.GetConversation(), resp.Timestamp, true); err != nil {
+    if err := insertLastMessages(resp.ID, cli.Store.ID.String(), recipient.String(), "text", msg.GetConversation(), resp.Timestamp, true, "", ""); err != nil {
         log.Errorf("Error inserting into last_messages: %v", err)
     }
 
