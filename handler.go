@@ -165,11 +165,11 @@ func handleMessage(evt *events.Message) {
 
 	remotejid := evt.Info.MessageSource.Chat.String()
 
-	if err := insertMessageHistory(evt.Info.ID, cli.Store.ID.String(), remotejid, evt.Info.Type, msgContent, evt.Info.Timestamp, evt.Info.MessageSource.IsFromMe); err != nil {
+	if err := InsertMessageHistory(evt.Info.ID, cli.Store.ID.String(), remotejid, evt.Info.Type, msgContent, evt.Info.Timestamp, evt.Info.MessageSource.IsFromMe); err != nil {
 		log.Errorf("Failed to insert message history: %v", err)
 	}
 
-	if err := insertLastMessages(evt.Info.ID, cli.Store.ID.String(), remotejid, evt.Info.Type, msgContent, evt.Info.Timestamp, evt.Info.MessageSource.IsFromMe); err != nil {
+	if err := InsertOrUpdateLastMessage(evt.Info.ID, cli.Store.ID.String(), remotejid, evt.Info.Type, msgContent, evt.Info.Timestamp, evt.Info.MessageSource.IsFromMe); err != nil {
 		log.Errorf("Failed to insert last messages: %v", err)
 	}
 
@@ -295,11 +295,11 @@ func handleSendMessage(args []string) {
 
 	log.Infof("Message sent (server timestamp: %s)", resp.Timestamp)
 
-	if err := insertMessageHistory(resp.ID, cli.Store.ID.String(), recipient.String(), "text", msg.GetConversation(), resp.Timestamp, true); err != nil {
+	if err := InsertMessageHistory(resp.ID, cli.Store.ID.String(), recipient.String(), "text", msg.GetConversation(), resp.Timestamp, true); err != nil {
 		log.Errorf("Error inserting message history: %v", err)
 	}
 
-	if err := insertLastMessages(resp.ID, cli.Store.ID.String(), recipient.String(), "text", msg.GetConversation(), resp.Timestamp, true); err != nil {
+	if err := InsertOrUpdateLastMessage(resp.ID, cli.Store.ID.String(), recipient.String(), "text", msg.GetConversation(), resp.Timestamp, true); err != nil {
 		log.Errorf("Error inserting last messages: %v", err)
 	}
 
