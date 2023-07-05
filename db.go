@@ -5,27 +5,18 @@ import (
 	"time"
 )
 
-// insertMessages inserts a messages record into the database.
-//
-// The messages includes details such as message ID, device JID, remote JID,
-// message content, message type, timestamp, and sent status.
-//
-// Parameters:
-//   - messageID: The ID of the message.
-//   - device_jid: The JID of the device (current session owner, our JID).
-//   - remote_jid: The JID of the remote user.
-//   - messageContent: The content of the message.
-//   - messageType: The type of the message.
-//   - timestamp: The timestamp when the message was sent.
-//   - sent: A boolean indicating if the message was sent.
-//
-// Returns:
-//   - error: An error if the insertion fails, or nil if successful.
-func insertMessages(messageID, device_jid, remote_jid, messageContent, messageType string, timestamp time.Time, sent bool, extension string, fileName string) error {
+// InsertMessageHistory inserts a message history record into the database.
+func insertMessages(messageID, device_jid, remote_jid, messageContent, messageType string, timestamp time.Time, sent bool, extension string, fileName string, user_id_integer int) error {
+	var user_id *int
+	if user_id_integer == -1 {
+		user_id = nil
+	} else {
+		user_id = &user_id_integer
+	}
 	_, err := db.Exec(`
-		INSERT INTO messages (message_id, device_jid, remote_jid, type, content, timestamp, sent, extension, file_name)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-    `, messageID, device_jid, remote_jid, messageContent, messageType, timestamp, sent, extension, fileName)
+		INSERT INTO messages (message_id, device_jid, remote_jid, type, content, timestamp, sent, extension, file_name, user_id)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+    `, messageID, device_jid, remote_jid, messageContent, messageType, timestamp, sent, extension, fileName, user_id)
 	if err != nil {
 		return fmt.Errorf("%w", err)
 	}
@@ -33,29 +24,20 @@ func insertMessages(messageID, device_jid, remote_jid, messageContent, messageTy
 	return nil
 }
 
-// insertLastMessages inserts or updates the last message for a remote JID in the database.
-//
-// If the remote JID is not present in the database, it inserts a new record.
-// If the remote JID is already present, it updates the existing record with the new message details.
-//
-// Parameters:
-//   - messageID: The ID of the message.
-//   - device_jid: The JID of the device.
-//   - remote_jid: The JID of the remote user.
-//   - messageContent: The content of the message.
-//   - messageType: The type of the message.
-//   - timestamp: The timestamp when the message was sent.
-//   - sent: A boolean indicating if the message was sent.
-//
-// Returns:
-//   - error: An error if the insertion/update fails, or nil if successful.
-func insertLastMessages(messageID, device_jid, remote_jid, messageContent, messageType string, timestamp time.Time, sent bool, extension string, fileName string) error {
+// InsertOrUpdateLastMessage inserts or updates the last message for a remote JID in the database.
+func insertLastMessages(messageID, device_jid, remote_jid, messageContent, messageType string, timestamp time.Time, sent bool, extension string, fileName string, user_id_integer int) error {
+	var user_id *int
+	if user_id_integer == -1 {
+		user_id = nil
+	} else {
+		user_id = &user_id_integer
+	}
 	_, err := db.Exec(`
-		INSERT INTO last_messages (message_id, device_jid, remote_jid, type, content, timestamp, sent, extension, file_name)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		INSERT INTO last_messages (message_id, device_jid, remote_jid, type, content, timestamp, sent, extension, file_name, user_id)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 		ON CONFLICT (remote_jid)
-		DO UPDATE SET message_id = $1, device_jid = $2, type = $4, content = $5, timestamp = $6, sent = $7, extension = $8, file_name = $9
-	`, messageID, device_jid, remote_jid, messageContent, messageType, timestamp, sent, extension)
+		DO UPDATE SET message_id = $1, device_jid = $2, type = $4, content = $5, timestamp = $6, sent = $7, extension = $8, file_name = $9, user_id = $10
+	`, messageID, device_jid, remote_jid, messageContent, messageType, timestamp, sent, extension, fileName, user_id)
 	if err != nil {
 		return fmt.Errorf("%w", err)
 	}

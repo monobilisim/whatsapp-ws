@@ -3,7 +3,6 @@ module whatsapp-ws
 go 1.19
 
 require (
-	github.com/fatih/structs v1.1.0
 	github.com/gorilla/websocket v1.5.0
 	github.com/lib/pq v1.10.9
 	github.com/mattn/go-sqlite3 v1.14.17

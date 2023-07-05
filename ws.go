@@ -1,9 +1,7 @@
 package main
 
 import (
-	"errors"
 	"net/http"
-	"strings"
 
 	"github.com/gorilla/websocket"
 )
@@ -17,6 +15,13 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
+type Command struct {
+	Cmd       string   `json:"cmd"`
+	Arguments []string `json:"args"`
+	UserID    int      `json:"user_id"`
+}
+
+// Handle incoming WebSocket connections, read json messages and pass them to the handleCmd function
 func serveWs(w http.ResponseWriter, r *http.Request) {
 	var err error
 	wsConn, err = upgrader.Upgrade(w, r, nil)
@@ -27,20 +32,13 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 	defer wsConn.Close()
 
 	for {
-		messageType, message, err := wsConn.ReadMessage()
+		var cmd Command
+		err := wsConn.ReadJSON(&cmd)
 		if err != nil {
-			if !websocket.IsCloseError(err, websocket.CloseNormalClosure) {
-				log.Errorf("Failed to read message: %v", err)
-			}
-			break
+			log.Errorf("Failed to read json: %v", err)
+			return
 		}
-
-		if messageType == websocket.TextMessage {
-			cmd := strings.TrimSpace(string(message))
-			if len(cmd) > 0 {
-				go handleWsCmd(cmd)
-			}
-		}
+		handleCmd(cmd)
 	}
 }
 
@@ -53,35 +51,4 @@ func serveStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusServiceUnavailable)
-}
-
-// Parse command, return command and arguments
-func parseCmd(cmd string) (string, []string, error) {
-	cmd = strings.Replace(cmd, "\n", `\n`, -1)
-	tokens := strings.Fields(cmd)
-
-	if len(tokens) < 2 {
-		return "", nil, errors.New("invalid command format")
-	}
-
-	command := strings.ToLower(tokens[0])
-	args := tokens[1:]
-
-	// make \n a newline
-	for i, arg := range args {
-		args[i] = strings.Replace(arg, `\n`, "\n", -1)
-	}
-
-	return command, args, nil
-}
-
-func handleWsCmd(cmd string) {
-	command, args, err := parseCmd(cmd)
-	log.Infof("Command: %s, Args: %v", command, args)
-	if err != nil {
-		log.Errorf(err.Error())
-		return
-	}
-
-	go handleCmd(command, args)
 }
