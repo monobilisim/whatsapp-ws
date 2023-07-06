@@ -1,11 +1,16 @@
-# mdtest
+# whatsapp-ws
 
-This is a simple tool for testing whatsmeow.
+whatsapp-ws, whatsmeow kütüphanesini kullanarak bir WebSocket arayüzü ve bir veritabanına günlük mesajları göndermek için endpointler sağlayan ve aynı zamanda bir WhatsApp köprüsü olarak hareket eden bir projedir. Kullanıcıların WhatsApp ile etkileşimde bulunmak ve çeşitli eylemler gerçekleştirmek için WebSocket aracılığıyla komutlar göndermesine olanak tanır.
 
-1. Clone the repository.
-2. Run `go build` inside this directory.
-3. Run `./mdtest` to start the program. Optionally, use `rlwrap ./mdtest` to get a nicer prompt.
-   Add `-debug` if you want to see the raw data being sent/received.
-4. On the first run, scan the QR code. On future runs, the program will remember you (unless `mdtest.db` is deleted). 
+whatsapp-ws'nin birincil amacı, WhatsApp mesajlaşma yeteneklerinin diğer uygulamalara ve sistemlere entegrasyonunu kolaylaştırmaktır. WebSocket arayüzünü kullanarak, kullanıcılar gerçek zamanlı bir bağlantı kurabilir ve WhatsApp ile programlı olarak etkileşim kurmak için komutlar gönderebilir.
 
-New messages will be automatically logged. To send a message, use `send <jid> <message>`
+## Build
+
+```bash
+go build -ldflags '-extldflags "-static"'
+```
+
+## Endpoints
+
+- `/ws` - websocket endpoint
+- `/status` - status endpoint
