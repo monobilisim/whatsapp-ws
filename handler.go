@@ -118,6 +118,10 @@ func handleMessage(evt *events.Message) {
 
 	log.Infof("Received message %s from %s (%s): %+v", evt.Info.ID, evt.Info.SourceString(), strings.Join(metaParts, ", "), evt.Message)
 
+	if evt.Message.GetProtocolMessage() != nil {
+		return
+	}
+
 	if evt.Message.GetPollUpdateMessage() != nil {
 		decrypted, err := cli.DecryptPollVote(evt)
 		if err != nil {
@@ -149,7 +153,7 @@ func handleMessage(evt *events.Message) {
 		exts, _ := mime.ExtensionsByType(img.GetMimetype())
 		extension = exts[0]
 		path := fmt.Sprintf("%s%s", evt.Info.ID, extension)
-		err = os.WriteFile(path, data, 0600)
+		_ = os.WriteFile(path, data, 0600)
 
 		path = fmt.Sprintf("%s%s", evt.Info.ID, ".jpg")
 		err = os.WriteFile(path, img.GetJpegThumbnail(), 0600)
@@ -158,7 +162,7 @@ func handleMessage(evt *events.Message) {
 			log.Errorf("Failed to save image: %v", err)
 			return
 		}
-		log.Infof("Saved image in message to %s", path)
+		log.Infof("Saved image message to %s", path)
 	}
 
 	if doc := evt.Message.GetDocumentMessage(); doc != nil {
@@ -171,6 +175,10 @@ func handleMessage(evt *events.Message) {
 		extension = exts[0]
 		path := fmt.Sprintf("%s%s", evt.Info.ID, extension)
 		err = os.WriteFile(path, data, 0600)
+		if err != nil {
+			log.Errorf("Failed to save document: %v", err)
+			return
+		}
 
 		fileName = doc.GetFileName()
 
@@ -181,7 +189,25 @@ func handleMessage(evt *events.Message) {
 			log.Errorf("Failed to save document: %v", err)
 			return
 		}
-		log.Infof("Saved document in message to %s", path)
+		log.Infof("Saved document message to %s", path)
+	}
+
+	if audio := evt.Message.GetAudioMessage(); audio != nil {
+		data, err := cli.Download(audio)
+		if err != nil {
+			log.Errorf("Failed to download audio: %v", err)
+			return
+		}
+		exts, _ := mime.ExtensionsByType(audio.GetMimetype())
+		extension = exts[0]
+		path := fmt.Sprintf("%s%s", evt.Info.ID, extension)
+		err = os.WriteFile(path, data, 0600)
+		if err != nil {
+			log.Errorf("Failed to save audio: %v", err)
+			return
+		}
+
+		log.Infof("Saved audio message to %s", path)
 	}
 
 	var msgContent string
@@ -266,16 +292,6 @@ func handleAppState(evt *events.AppState) {
 
 func handleKeepAliveTimeout(evt *events.KeepAliveTimeout) {
 	log.Debugf("Keepalive timeout event: %+v", evt)
-	if evt.ErrorCount > 3 {
-		log.Debugf("Got >3 keepalive timeouts, forcing reconnect")
-		go func() {
-			cli.Disconnect()
-			err := cli.Connect()
-			if err != nil {
-				log.Errorf("Error force-reconnecting after keepalive timeouts: %v", err)
-			}
-		}()
-	}
 }
 
 func handleKeepAliveRestored(evt *events.KeepAliveRestored) {

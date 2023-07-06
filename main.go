@@ -110,10 +110,9 @@ func main() {
 	}
 
 	// Connect to chatlog database
-	var err2 error
-	db, err2 = sql.Open("postgres", *chatLogDBAddress)
-	if err2 != nil {
-		log.Errorf("Failed to connect chatlog database: %v", err2)
+	db, err = sql.Open("postgres", *chatLogDBAddress)
+	if err != nil {
+		log.Errorf("Failed to connect chatlog database: %v", err)
 		return
 	}
 	defer db.Close()
