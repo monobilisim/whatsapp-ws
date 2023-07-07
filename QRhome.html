@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Account List</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <style>
+        body {
+            display: flex;
+            min-height: 100vh;
+            flex-direction: column;
+        }
+
+        main {
+            flex: 1 0 auto;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <nav>
+            <div class="nav-wrapper blue">
+                <a href="#" class="brand-logo center">Account List</a>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <div class="container">
+            <table class="highlight">
+                <thead>
+                    <tr>
+                        <th>Account</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="accountList">
+                    <!-- Account items will be dynamically added here -->
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <footer class="page-footer blue">
+        <div class="container">
+            <div class="row">
+                <div class="col s12 center">
+                    &copy; 2023 Mono Bilişim Limited
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script>
+        const accountList = document.getElementById('accountList');
+
+        for (let i = 0; i < 32; i++) {
+            const accountRow = document.createElement('tr');
+            accountRow.innerHTML = `
+                <td>Port ${i}</td>
+                <td id="status${i}">Checking...</td>
+                <td>
+                    <button class="btn modal-trigger" data-target="modal${i}">QR</button>
+                </td>
+            `;
+
+            accountList.appendChild(accountRow);
+
+            const modalDiv = document.createElement('div');
+            modalDiv.classList.add('modal');
+            modalDiv.id = `modal${i}`;
+            modalDiv.innerHTML = `
+                <div class="modal-content">
+                    <h4>Modal Heading ${i}</h4>
+                    <p>Your embed link here for Port ${i}</p>
+                </div>
+                <div class="modal-footer">
+                    <a href="#!" class="modal-close waves-effect waves-green btn">Close</a>
+                </div>
+            `;
+
+            document.body.appendChild(modalDiv);
+
+            const statusElement = document.getElementById(`status${i}`);
+            checkStatus(`http://example.com/port${i}`, statusElement);
+        }
+
+        function checkStatus(url, statusElement) {
+            fetch(url)
+                .then(response => {
+                    if (response.ok) {
+                        statusElement.textContent = "OK";
+                        statusElement.classList.add("green-text");
+                    } else {
+                        statusElement.textContent = "Failed";
+                        statusElement.classList.add("red-text");
+                    }
+                })
+                .catch(error => {
+                    statusElement.textContent = "Error";
+                    statusElement.classList.add("red-text");
+                });
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const modals = document.querySelectorAll('.modal');
+            M.Modal.init(modals);
+        });
+    </script>
+</body>
+
+</html>
