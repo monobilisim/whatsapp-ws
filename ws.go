@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/websocket"
+	"github.com/mdp/qrterminal/v3"
 )
 
 // WebSocket upgrader
@@ -51,4 +52,14 @@ func serveStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusServiceUnavailable)
+}
+
+func serveQR(w http.ResponseWriter, r *http.Request) {
+	if cli.IsLoggedIn() {
+		w.WriteHeader(http.StatusServiceUnavailable)
+		return
+	}
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	qrterminal.GenerateHalfBlock(qrStr, qrterminal.L, w)
 }

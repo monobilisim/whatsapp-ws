@@ -52,6 +52,7 @@ var wsConn *websocket.Conn
 var storeContainer *sqlstore.Container
 
 var db *sql.DB
+var qrStr string
 
 func main() {
 	waBinary.IndentXML = true
@@ -81,6 +82,7 @@ func main() {
 	// Serve WebSocket endpoint
 	http.HandleFunc("/ws", serveWs)
 	http.HandleFunc("/status", serveStatus)
+	http.HandleFunc("/qr", serveQR)
 	go func() {
 		log.Infof("Starting WebSocket server")
 		err := http.ListenAndServe(":"+*wsPort, nil)
@@ -126,7 +128,9 @@ func main() {
 		go func() {
 			for evt := range ch {
 				if evt.Event == "code" {
+					qrStr = evt.Code
 					qrterminal.GenerateHalfBlock(evt.Code, qrterminal.L, os.Stdout)
+
 				} else {
 					log.Infof("QR channel result: %s", evt.Event)
 				}
