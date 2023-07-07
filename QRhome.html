@@ -57,14 +57,18 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
     <script>
         const accountList = document.getElementById('accountList');
-
+        const baseUrl = '';
         for (let i = 0; i < 32; i++) {
             const accountRow = document.createElement('tr');
+
             accountRow.innerHTML = `
                 <td>Port ${i}</td>
                 <td id="status${i}">Checking...</td>
                 <td>
                     <button class="btn modal-trigger" data-target="modal${i}">QR</button>
+                    <button class="btn stop-btn">Stop</button>
+                    <button class="btn start-btn">Start</button>
+                    <button class="btn restart-btn">Restart</button>
                 </td>
             `;
 
@@ -76,33 +80,115 @@
             modalDiv.innerHTML = `
                 <div class="modal-content">
                     <h4>Modal Heading ${i}</h4>
-                    <p>Your embed link here for Port ${i}</p>
+                    <embed type="text/html" src="" width="100%" height="650px" />
                 </div>
                 <div class="modal-footer">
                     <a href="#!" class="modal-close waves-effect waves-green btn">Close</a>
                 </div>
             `;
 
+
             document.body.appendChild(modalDiv);
 
             const statusElement = document.getElementById(`status${i}`);
-            checkStatus(`http://example.com/port${i}`, statusElement);
+            checkStatus(``, statusElement);
+
+            // Get references to the buttons in the current row
+            const stopButton = accountRow.querySelector('.stop-btn');
+            const startButton = accountRow.querySelector('.start-btn');
+            const restartButton = accountRow.querySelector('.restart-btn');
+
+            // Function to handle the stop action
+            function stopAccount(port) {
+                const stopUrl = `${baseUrl}/stop_port?port=${port}`;
+
+                fetch(stopUrl, { redirect: "follow" })
+                    .then((response) => {
+                        if (response.ok) {
+                            console.log(`Stop action for account ${port} successful`);
+                        } else {
+                            console.log(`Stop action for account ${port} failed`);
+                        }
+                    })
+                    .catch((error) => {
+                        console.error(`Error during stop action for account ${port}`, error);
+                    });
+            }
+
+            // Function to handle the start action
+            function startAccount(port) {
+                const startUrl = `${baseUrl}/start_port?port=${port}`;
+
+                fetch(startUrl, { method: 'GET', redirect: "follow" })
+                    .then((response) => {
+                        if (response.ok) {
+                            console.log(`Start action for account ${port} successful`);
+                        } else {
+                            console.log(`Start action for account ${port} failed`);
+                        }
+                    })
+                    .catch((error) => {
+                        console.error(`Error during start action for account ${port}`, error);
+                    });
+            }
+
+            // Function to handle the restart action
+            function restartAccount(port) {
+                const restartUrl = `${baseUrl}/restart_port?port=${port}`;
+
+                fetch(restartUrl, { method: 'GET', redirect: "follow" })
+                    .then((response) => {
+                        if (response.ok) {
+                            console.log(`Restart action for account ${port} successful`);
+                        } else {
+                            console.log(`Restart action for account ${port} failed`);
+                        }
+                    })
+                    .catch((error) => {
+                        console.error(`Error during restart action for account ${port}`, error);
+                    });
+            }
+
+            // Add event listeners to the buttons
+            stopButton.addEventListener('click', () => {
+                // Perform stop action for the corresponding account
+                stopAccount(i);
+            });
+
+            startButton.addEventListener('click', () => {
+                // Perform start action for the corresponding account
+                startAccount(i);
+            });
+
+            restartButton.addEventListener('click', () => {
+                // Perform restart action for the corresponding account
+                restartAccount(i);
+            });
+
         }
 
+
+
         function checkStatus(url, statusElement) {
-            fetch(url)
-                .then(response => {
-                    if (response.ok) {
+            fetch(url, { redirect: "follow" })
+                .then((response) => {
+                    if (response.status === 200) {
                         statusElement.textContent = "OK";
                         statusElement.classList.add("green-text");
+                    } else if (response.status === 503) {
+                        statusElement.textContent = "Service Unavailable";
+                        statusElement.classList.add("red-text");
                     } else {
                         statusElement.textContent = "Failed";
                         statusElement.classList.add("red-text");
                     }
                 })
-                .catch(error => {
-                    statusElement.textContent = "Error";
-                    statusElement.classList.add("red-text");
+                .catch((error) => {
+                    if (error.name !== "AbortError") {
+                        statusElement.textContent = "Error";
+                        statusElement.classList.add("red-text");
+                        console.error("Error during fetch:", error);
+                    }
                 });
         }
 
