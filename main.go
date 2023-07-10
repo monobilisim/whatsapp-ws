@@ -56,6 +56,13 @@ var qrStr string
 
 func main() {
 	waBinary.IndentXML = true
+	home, err := os.UserHomeDir()
+	if err != nil {
+		log.Errorf("Couldn't get users home directory: %v", err)
+	}
+
+	var dirPtr = flag.String("dir", home, "directory to upload files to")
+
 	flag.Parse()
 
 	if *debugLogs {
@@ -67,7 +74,6 @@ func main() {
 	log = waLog.Stdout("Main", logLevel, true)
 
 	dbLog := waLog.Stdout("Database", logLevel, true)
-	var err error
 	storeContainer, err = sqlstore.New(*dbDialect, *dbAddress, dbLog)
 	if err != nil {
 		log.Errorf("Failed to connect to session database: %v", err)
@@ -83,6 +89,10 @@ func main() {
 	http.HandleFunc("/ws", serveWs)
 	http.HandleFunc("/status", serveStatus)
 	http.HandleFunc("/qr", serveQR)
+	http.HandleFunc("/upload", func(w http.ResponseWriter, r *http.Request) {
+		uploadHandler(w, r, *dirPtr)
+	})
+
 	go func() {
 		log.Infof("Starting WebSocket server")
 		err := http.ListenAndServe(":"+*wsPort, nil)
