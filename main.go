@@ -45,6 +45,8 @@ var dbAddress = flag.String("db-address", "file:mdtest.db?sslmode=disable", "Dat
 var requestFullSync = flag.Bool("request-full-sync", false, "Request full (1 year) history sync when logging in?")
 var wsPort = flag.String("ws-port", "8080", "WebSocket port")
 var chatLogDBAddress = flag.String("chatlog-db-address", "postgresql://local@localhost/testing?sslmode=disable", "Chat log database address")
+var dirPtr = flag.String("data-dir", "/opt/whatsapp/data", "Directory to serve files from")
+
 var pairRejectChan = make(chan bool, 1)
 
 // WebSocket connection and store container
@@ -56,13 +58,6 @@ var qrStr string
 
 func main() {
 	waBinary.IndentXML = true
-	home, err := os.UserHomeDir()
-	if err != nil {
-		log.Errorf("Couldn't get users home directory: %v", err)
-	}
-
-	var dirPtr = flag.String("save-dir", home, "directory to upload files to")
-
 	flag.Parse()
 
 	if *debugLogs {
@@ -73,6 +68,7 @@ func main() {
 	}
 	log = waLog.Stdout("Main", logLevel, true)
 
+	var err error
 	dbLog := waLog.Stdout("Database", logLevel, true)
 	storeContainer, err = sqlstore.New(*dbDialect, *dbAddress, dbLog)
 	if err != nil {
