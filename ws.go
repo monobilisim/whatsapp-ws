@@ -101,6 +101,6 @@ func uploadHandler(w http.ResponseWriter, r *http.Request, uploadDir string) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
+	log.Infof("Saved file %s", handler.Filename)
 	fmt.Fprintf(w, "File uploaded successfully\n")
 }

@@ -61,7 +61,7 @@ func main() {
 		log.Errorf("Couldn't get users home directory: %v", err)
 	}
 
-	var dirPtr = flag.String("dir", home, "directory to upload files to")
+	var dirPtr = flag.String("save-dir", home, "directory to upload files to")
 
 	flag.Parse()
 
