@@ -24,10 +24,6 @@ func handleCmd(command Command) {
 		handleSendTextMessage(command.Arguments, command.UserID)
 	case "markread":
 		handleMarkRead(command.Arguments)
-	case "sendimage":
-		handleSendImage(command.Arguments, command.UserID)
-	case "senddocument":
-		handleSendDocument(command.Arguments, command.UserID)
 	}
 }
 

@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
-	"path/filepath"
+	"strconv"
 
 	"github.com/gorilla/websocket"
 	"github.com/mdp/qrterminal/v3"
@@ -83,24 +82,36 @@ func uploadHandler(w http.ResponseWriter, r *http.Request, uploadDir string) {
 	}
 
 	file, handler, err := r.FormFile("file")
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
+	JID := r.FormValue("jid")
+	userID, err := strconv.Atoi(r.FormValue("user_id"))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
 	defer file.Close()
 
-	dst, err := os.Create(filepath.Join(uploadDir, handler.Filename))
+	data, err := io.ReadAll(file)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	defer dst.Close()
 
-	_, err = io.Copy(dst, file)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+	mimeType := http.DetectContentType(data)
+
+	// if mimeType is image, use handleSendImage, if its document, use handleSendDocument
+	if mimeType[:5] == "image" {
+		handleSendImage(JID, handler.Filename, userID, data)
+	} else {
+		handleSendDocument(JID, handler.Filename, userID, data)
 	}
-	log.Infof("Saved file %s", handler.Filename)
+
+	log.Infof("Uploaded file %s to %s, mimetype: %s", handler.Filename, JID, mimeType)
 	fmt.Fprintf(w, "File uploaded successfully\n")
 }

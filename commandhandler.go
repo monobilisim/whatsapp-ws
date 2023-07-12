@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -114,27 +112,20 @@ func handleMarkRead(args []string) {
 	}
 }
 
-func handleSendImage(args []string, userID int) {
-	if len(args) < 2 {
-		log.Errorf("Usage: sendimg <jid> <image path> [caption]")
-		return
-	}
-	recipient, ok := parseJID(args[0])
+func handleSendImage(JID string, caption string, userID int, data []byte) {
+
+	recipient, ok := parseJID(JID)
 	if !ok {
 		return
 	}
-	data, err := os.ReadFile(args[1])
-	if err != nil {
-		log.Errorf("Failed to read %s: %v", args[0], err)
-		return
-	}
+
 	uploaded, err := cli.Upload(context.Background(), data, whatsmeow.MediaImage)
 	if err != nil {
 		log.Errorf("Failed to upload file: %v", err)
 		return
 	}
 	msg := &waProto.Message{ImageMessage: &waProto.ImageMessage{
-		Caption:       proto.String(strings.Join(args[2:], " ")),
+		Caption:       proto.String(caption),
 		Url:           proto.String(uploaded.URL),
 		DirectPath:    proto.String(uploaded.DirectPath),
 		MediaKey:      uploaded.MediaKey,
@@ -151,18 +142,10 @@ func handleSendImage(args []string, userID int) {
 	}
 }
 
-func handleSendDocument(args []string, userID int) {
-	if len(args) < 2 {
-		log.Errorf("Usage: senddoc <jid> <document path> [caption]")
-		return
-	}
-	recipient, ok := parseJID(args[0])
+func handleSendDocument(JID string, caption string, userID int, data []byte) {
+
+	recipient, ok := parseJID(JID)
 	if !ok {
-		return
-	}
-	data, err := os.ReadFile(args[1])
-	if err != nil {
-		log.Errorf("Failed to read %s: %v", args[0], err)
 		return
 	}
 	uploaded, err := cli.Upload(context.Background(), data, whatsmeow.MediaDocument)
@@ -171,7 +154,7 @@ func handleSendDocument(args []string, userID int) {
 		return
 	}
 	msg := &waProto.Message{DocumentMessage: &waProto.DocumentMessage{
-		Caption:       proto.String(strings.Join(args[2:], " ")),
+		Caption:       proto.String(caption),
 		Url:           proto.String(uploaded.URL),
 		DirectPath:    proto.String(uploaded.DirectPath),
 		MediaKey:      uploaded.MediaKey,
@@ -179,7 +162,7 @@ func handleSendDocument(args []string, userID int) {
 		FileEncSha256: uploaded.FileEncSHA256,
 		FileSha256:    uploaded.FileSHA256,
 		FileLength:    proto.Uint64(uint64(len(data))),
-		Title:         proto.String(filepath.Base(args[1])),
+		Title:         proto.String("test"),
 	}}
 	resp, err := cli.SendMessage(context.Background(), recipient, msg)
 	if err != nil {
