@@ -3,6 +3,7 @@ module whatsapp-ws
 go 1.19
 
 require (
+	github.com/disintegration/imaging v1.6.2
 	github.com/gorilla/websocket v1.5.0
 	github.com/lib/pq v1.10.9
 	github.com/mattn/go-sqlite3 v1.14.17
@@ -27,6 +28,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	go.mau.fi/libsignal v0.1.0 // indirect
 	golang.org/x/crypto v0.11.0 // indirect
+	golang.org/x/image v0.5.0 // indirect
 	golang.org/x/net v0.12.0 // indirect
 	golang.org/x/sys v0.10.0 // indirect
 	golang.org/x/text v0.11.0 // indirect

@@ -1,12 +1,17 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"mime"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/disintegration/imaging"
 	"go.mau.fi/whatsmeow"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
 	"google.golang.org/protobuf/proto"
@@ -112,62 +117,160 @@ func handleMarkRead(args []string) {
 	}
 }
 
-func handleSendImage(JID string, caption string, userID int, data []byte) {
-
+func handleSendImage(JID string, caption string, userID int, data []byte) (string, error) {
 	recipient, ok := parseJID(JID)
 	if !ok {
-		return
+		return "", fmt.Errorf("invalid JID")
 	}
 
 	uploaded, err := cli.Upload(context.Background(), data, whatsmeow.MediaImage)
 	if err != nil {
-		log.Errorf("Failed to upload file: %v", err)
-		return
+		return "", fmt.Errorf("failed to upload file: %v", err)
 	}
-	msg := &waProto.Message{ImageMessage: &waProto.ImageMessage{
-		Caption:       proto.String(caption),
-		Url:           proto.String(uploaded.URL),
-		DirectPath:    proto.String(uploaded.DirectPath),
-		MediaKey:      uploaded.MediaKey,
-		Mimetype:      proto.String(http.DetectContentType(data)),
-		FileEncSha256: uploaded.FileEncSHA256,
-		FileSha256:    uploaded.FileSHA256,
-		FileLength:    proto.Uint64(uint64(len(data))),
-	}}
+
+	msg := createImageMessage(caption, uploaded, &data)
 	resp, err := cli.SendMessage(context.Background(), recipient, msg)
 	if err != nil {
-		log.Errorf("Error sending image message: %v", err)
-	} else {
-		log.Infof("Image message sent (server timestamp: %s)", resp.Timestamp)
+		return "", fmt.Errorf("error sending image message: %v", err)
+	}
+
+	log.Infof("Image message sent (server timestamp: %s)", resp.Timestamp)
+
+	if err := insertMessages(resp.ID, cli.Store.ID.String(), recipient.String(), "image", caption, resp.Timestamp, true, "", "", userID); err != nil {
+		return "", fmt.Errorf("error inserting into messages: %v", err)
+	}
+
+	if err := insertLastMessages(resp.ID, cli.Store.ID.String(), recipient.String(), "image", caption, resp.Timestamp, true, "", "", userID); err != nil {
+		return "", fmt.Errorf("error inserting into last_messages: %v", err)
+	}
+
+	// Save image to disk
+	saveImageToDisk(msg, data, resp.ID)
+	return resp.ID, nil
+}
+
+func handleSendDocument(JID string, caption string, userID int, data []byte) (string, error) {
+	recipient, ok := parseJID(JID)
+	if !ok {
+		return "", fmt.Errorf("invalid JID")
+	}
+
+	uploaded, err := cli.Upload(context.Background(), data, whatsmeow.MediaDocument)
+	if err != nil {
+		return "", fmt.Errorf("failed to upload file: %v", err)
+	}
+
+	msg := createDocumentMessage(caption, uploaded, &data)
+	resp, err := cli.SendMessage(context.Background(), recipient, msg)
+	if err != nil {
+		return "", fmt.Errorf("error sending document message: %v", err)
+	}
+
+	log.Infof("Document message sent (server timestamp: %s)", resp.Timestamp)
+
+	if err := insertMessages(resp.ID, cli.Store.ID.String(), recipient.String(), "document", caption, resp.Timestamp, true, "", "", userID); err != nil {
+		return "", fmt.Errorf("error inserting into messages: %v", err)
+	}
+
+	if err := insertLastMessages(resp.ID, cli.Store.ID.String(), recipient.String(), "document", caption, resp.Timestamp, true, "", "", userID); err != nil {
+		return "", fmt.Errorf("error inserting into last_messages: %v", err)
+	}
+
+	saveDocumentToDisk(msg, data, resp.ID)
+	return resp.ID, nil
+}
+
+func saveImageToDisk(msg *waProto.Message, data []byte, ID string) {
+	exts, err := mime.ExtensionsByType(msg.GetImageMessage().GetMimetype())
+	if err != nil {
+		log.Errorf("Error getting file extension: %v", err)
+		return
+	}
+
+	if len(exts) == 0 {
+		log.Errorf("No file extension found for mimetype: %s", msg.GetImageMessage().GetMimetype())
+		return
+	}
+
+	extension := exts[0]
+	path := fmt.Sprintf("%s%s", ID, extension)
+
+	err = os.WriteFile(path, data, 0600)
+	if err != nil {
+		log.Errorf("Error saving file to disk: %v", err)
+		return
+	}
+
+	img, err := imaging.Decode(bytes.NewReader(data))
+	if err != nil {
+		log.Errorf("Error decoding image: %v", err)
+		return
+	}
+
+	thumbnail := imaging.Thumbnail(img, 100, 100, imaging.Lanczos)
+
+	thumbnailPath := fmt.Sprintf("%s%s", ID, ".jpg")
+	err = imaging.Save(thumbnail, thumbnailPath, imaging.JPEGQuality(20))
+	if err != nil {
+		log.Errorf("Error saving thumbnail to disk: %v", err)
+		return
+	}
+
+	log.Infof("Saved file to %s", path)
+	log.Infof("Saved thumbnail to %s", thumbnailPath)
+}
+
+func saveDocumentToDisk(msg *waProto.Message, data []byte, ID string) {
+	exts, err := mime.ExtensionsByType(msg.GetDocumentMessage().GetMimetype())
+	if err != nil {
+		log.Errorf("Error getting file extension: %v", err)
+		return
+	}
+
+	if len(exts) == 0 {
+		log.Errorf("No file extension found for mimetype: %s", msg.GetDocumentMessage().GetMimetype())
+		return
+	}
+
+	extension := exts[0]
+	path := fmt.Sprintf("%s%s", ID, extension)
+
+	err = os.WriteFile(path, data, 0600)
+	if err != nil {
+		log.Errorf("Error saving file to disk: %v", err)
+		return
+	}
+
+	log.Infof("Saved file to %s", path)
+}
+
+func createImageMessage(caption string, uploaded whatsmeow.UploadResponse, data *[]byte) *waProto.Message {
+	return &waProto.Message{
+		ImageMessage: &waProto.ImageMessage{
+			Caption:       proto.String(caption),
+			Url:           proto.String(uploaded.URL),
+			DirectPath:    proto.String(uploaded.DirectPath),
+			MediaKey:      uploaded.MediaKey,
+			Mimetype:      proto.String(http.DetectContentType(*data)),
+			FileEncSha256: uploaded.FileEncSHA256,
+			FileSha256:    uploaded.FileSHA256,
+			FileLength:    proto.Uint64(uint64(len(*data))),
+		},
 	}
 }
 
-func handleSendDocument(JID string, caption string, userID int, data []byte) {
-
-	recipient, ok := parseJID(JID)
-	if !ok {
-		return
-	}
-	uploaded, err := cli.Upload(context.Background(), data, whatsmeow.MediaDocument)
-	if err != nil {
-		log.Errorf("Failed to upload file: %v", err)
-		return
-	}
-	msg := &waProto.Message{DocumentMessage: &waProto.DocumentMessage{
-		Caption:       proto.String(caption),
-		Url:           proto.String(uploaded.URL),
-		DirectPath:    proto.String(uploaded.DirectPath),
-		MediaKey:      uploaded.MediaKey,
-		Mimetype:      proto.String(http.DetectContentType(data)),
-		FileEncSha256: uploaded.FileEncSHA256,
-		FileSha256:    uploaded.FileSHA256,
-		FileLength:    proto.Uint64(uint64(len(data))),
-		Title:         proto.String("test"),
-	}}
-	resp, err := cli.SendMessage(context.Background(), recipient, msg)
-	if err != nil {
-		log.Errorf("Error sending document message: %v", err)
-	} else {
-		log.Infof("Document message sent (server timestamp: %s)", resp.Timestamp)
+func createDocumentMessage(caption string, uploaded whatsmeow.UploadResponse, data *[]byte) *waProto.Message {
+	return &waProto.Message{
+		DocumentMessage: &waProto.DocumentMessage{
+			Caption:       proto.String(caption),
+			Url:           proto.String(uploaded.URL),
+			DirectPath:    proto.String(uploaded.DirectPath),
+			MediaKey:      uploaded.MediaKey,
+			Mimetype:      proto.String(http.DetectContentType(*data)),
+			FileEncSha256: uploaded.FileEncSHA256,
+			FileSha256:    uploaded.FileSHA256,
+			FileLength:    proto.Uint64(uint64(len(*data))),
+			Title:         proto.String(fmt.Sprintf("%s%s", "document", filepath.Ext(uploaded.URL))),
+		},
 	}
 }

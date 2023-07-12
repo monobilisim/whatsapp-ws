@@ -1,10 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gorilla/websocket"
 	"github.com/mdp/qrterminal/v3"
@@ -77,41 +77,53 @@ func serveQR(w http.ResponseWriter, r *http.Request) {
 func uploadHandler(w http.ResponseWriter, r *http.Request, uploadDir string) {
 	err := r.ParseMultipartForm(10 << 20)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		handleError(w, http.StatusBadRequest, "Failed to parse multipart form", err)
 		return
 	}
 
 	file, handler, err := r.FormFile("file")
-
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		handleError(w, http.StatusBadRequest, "Failed to retrieve file from request", err)
 		return
 	}
+	defer file.Close()
 
 	JID := r.FormValue("jid")
 	userID, err := strconv.Atoi(r.FormValue("user_id"))
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		handleError(w, http.StatusBadRequest, "Invalid user ID", err)
 		return
 	}
 
-	defer file.Close()
-
 	data, err := io.ReadAll(file)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		handleError(w, http.StatusInternalServerError, "Failed to read file data", err)
 		return
 	}
 
 	mimeType := http.DetectContentType(data)
 
-	// if mimeType is image, use handleSendImage, if its document, use handleSendDocument
-	if mimeType[:5] == "image" {
-		handleSendImage(JID, handler.Filename, userID, data)
+	var responseID string
+	if strings.HasPrefix(mimeType, "image/") {
+		responseID, err = handleSendImage(JID, handler.Filename, userID, data)
+		if err != nil {
+			handleError(w, http.StatusInternalServerError, "Failed to handle image upload", err)
+			return
+		}
 	} else {
-		handleSendDocument(JID, handler.Filename, userID, data)
+		responseID, err = handleSendDocument(JID, handler.Filename, userID, data)
+		if err != nil {
+			handleError(w, http.StatusInternalServerError, "Failed to handle document upload", err)
+			return
+		}
 	}
 
 	log.Infof("Uploaded file %s to %s, mimetype: %s", handler.Filename, JID, mimeType)
-	fmt.Fprintf(w, "File uploaded successfully\n")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(responseID))
+}
+
+func handleError(w http.ResponseWriter, statusCode int, message string, err error) {
+	log.Errorf("%s: %v", message, err)
+	http.Error(w, message, statusCode)
 }
