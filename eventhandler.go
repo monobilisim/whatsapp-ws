@@ -103,10 +103,10 @@ func handleMessage(evt *events.Message) {
 		exts, _ := mime.ExtensionsByType(img.GetMimetype())
 		extension = exts[0]
 		path := fmt.Sprintf("%s%s", evt.Info.ID, extension)
-		_ = os.WriteFile(path, data, 0600)
+		_ = os.WriteFile(path, data, 0644)
 
 		path = fmt.Sprintf("%s%s", evt.Info.ID, ".jpg")
-		err = os.WriteFile(path, img.GetJpegThumbnail(), 0600)
+		err = os.WriteFile(path, img.GetJpegThumbnail(), 0644)
 
 		if err != nil {
 			log.Errorf("Failed to save image: %v", err)
@@ -124,7 +124,7 @@ func handleMessage(evt *events.Message) {
 		exts, _ := mime.ExtensionsByType(doc.GetMimetype())
 		extension = exts[0]
 		path := fmt.Sprintf("%s%s", evt.Info.ID, extension)
-		err = os.WriteFile(path, data, 0600)
+		err = os.WriteFile(path, data, 0644)
 		if err != nil {
 			log.Errorf("Failed to save document: %v", err)
 			return
@@ -133,7 +133,7 @@ func handleMessage(evt *events.Message) {
 		fileName = doc.GetFileName()
 
 		path = fmt.Sprintf("%s%s", evt.Info.ID, ".jpg")
-		err = os.WriteFile(path, doc.GetJpegThumbnail(), 0600)
+		err = os.WriteFile(path, doc.GetJpegThumbnail(), 0644)
 
 		if err != nil {
 			log.Errorf("Failed to save document: %v", err)
@@ -151,7 +151,7 @@ func handleMessage(evt *events.Message) {
 		exts, _ := mime.ExtensionsByType(audio.GetMimetype())
 		extension = exts[0]
 		path := fmt.Sprintf("%s%s", evt.Info.ID, extension)
-		err = os.WriteFile(path, data, 0600)
+		err = os.WriteFile(path, data, 0644)
 		if err != nil {
 			log.Errorf("Failed to save audio: %v", err)
 			return

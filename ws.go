@@ -75,6 +75,15 @@ func serveQR(w http.ResponseWriter, r *http.Request) {
 }
 
 func uploadHandler(w http.ResponseWriter, r *http.Request, uploadDir string) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
 	err := r.ParseMultipartForm(10 << 20)
 	if err != nil {
 		handleError(w, http.StatusBadRequest, "Failed to parse multipart form", err)

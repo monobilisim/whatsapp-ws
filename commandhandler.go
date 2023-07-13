@@ -98,6 +98,11 @@ func handleMarkRead(args []string) {
 	messageID := args[0]
 	remoteJID := args[1]
 
+	if remoteJID == "" {
+		log.Errorf("Invalid remote JID")
+		return
+	}
+
 	sender, ok := parseJID(remoteJID)
 	if !ok {
 		return
@@ -105,8 +110,7 @@ func handleMarkRead(args []string) {
 
 	timestamp := time.Now()
 
-	err := cli.MarkRead([]string{messageID}, timestamp, sender, sender)
-	if err != nil {
+	if err := cli.MarkRead([]string{messageID}, timestamp, sender, sender); err != nil {
 		log.Errorf("Error marking read: %v", err)
 		return
 	}
@@ -195,7 +199,7 @@ func saveImageToDisk(msg *waProto.Message, data []byte, ID string) {
 	extension := exts[0]
 	path := fmt.Sprintf("%s%s", ID, extension)
 
-	err = os.WriteFile(path, data, 0600)
+	err = os.WriteFile(path, data, 0644)
 	if err != nil {
 		log.Errorf("Error saving file to disk: %v", err)
 		return
@@ -235,7 +239,7 @@ func saveDocumentToDisk(msg *waProto.Message, data []byte, ID string) {
 	extension := exts[0]
 	path := fmt.Sprintf("%s%s", ID, extension)
 
-	err = os.WriteFile(path, data, 0600)
+	err = os.WriteFile(path, data, 0644)
 	if err != nil {
 		log.Errorf("Error saving file to disk: %v", err)
 		return
