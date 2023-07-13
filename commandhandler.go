@@ -145,7 +145,7 @@ func handleSendImage(JID string, caption string, userID int, data []byte) (strin
 	}
 
 	// Save image to disk
-	saveImageToDisk(msg, data, resp.ID)
+	saveImage(msg, data, resp.ID)
 	return resp.ID, nil
 }
 
@@ -176,11 +176,11 @@ func handleSendDocument(JID string, caption string, userID int, data []byte) (st
 		return "", fmt.Errorf("error inserting into last_messages: %v", err)
 	}
 
-	saveDocumentToDisk(msg, data, resp.ID)
+	saveDocument(msg, data, resp.ID)
 	return resp.ID, nil
 }
 
-func saveImageToDisk(msg *waProto.Message, data []byte, ID string) {
+func saveImage(msg *waProto.Message, data []byte, ID string) {
 	exts, err := mime.ExtensionsByType(msg.GetImageMessage().GetMimetype())
 	if err != nil {
 		log.Errorf("Error getting file extension: %v", err)
@@ -193,11 +193,10 @@ func saveImageToDisk(msg *waProto.Message, data []byte, ID string) {
 	}
 
 	extension := exts[0]
-	path := fmt.Sprintf("%s%s", ID, extension)
+	fileName := fmt.Sprintf("%s%s", ID, extension)
 
-	err = os.WriteFile(path, data, 0600)
-	if err != nil {
-		log.Errorf("Error saving file to disk: %v", err)
+	if err := uploadFile(*minioBucket, fileName, data); err != nil {
+		log.Errorf("Error uploading image: %v", err)
 		return
 	}
 
@@ -209,18 +208,23 @@ func saveImageToDisk(msg *waProto.Message, data []byte, ID string) {
 
 	thumbnail := imaging.Thumbnail(img, 100, 100, imaging.Lanczos)
 
-	thumbnailPath := fmt.Sprintf("%s%s", ID, ".jpg")
-	err = imaging.Save(thumbnail, thumbnailPath, imaging.JPEGQuality(20))
-	if err != nil {
-		log.Errorf("Error saving thumbnail to disk: %v", err)
+	thumbnailData := new(bytes.Buffer)
+	if err := imaging.Encode(thumbnailData, thumbnail, imaging.JPEG); err != nil {
+		log.Errorf("Error encoding thumbnail: %v", err)
 		return
 	}
 
-	log.Infof("Saved file to %s", path)
-	log.Infof("Saved thumbnail to %s", thumbnailPath)
+	thumbnailFileName := fmt.Sprintf("%s%s", ID, ".jpg")
+	if err := uploadFile(*minioBucket, thumbnailFileName, thumbnailData.Bytes()); err != nil {
+		log.Errorf("Error uploading thumbnail: %v", err)
+		return
+	}
+
+	log.Infof("Uploaded image to %s", fileName)
+	log.Infof("Uploaded thumbnail to %s", thumbnailFileName)
 }
 
-func saveDocumentToDisk(msg *waProto.Message, data []byte, ID string) {
+func saveDocument(msg *waProto.Message, data []byte, ID string) {
 	exts, err := mime.ExtensionsByType(msg.GetDocumentMessage().GetMimetype())
 	if err != nil {
 		log.Errorf("Error getting file extension: %v", err)

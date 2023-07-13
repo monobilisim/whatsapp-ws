@@ -24,6 +24,8 @@ import (
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/mdp/qrterminal/v3"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
 	"google.golang.org/protobuf/proto"
 
 	"go.mau.fi/whatsmeow"
@@ -46,12 +48,16 @@ var requestFullSync = flag.Bool("request-full-sync", false, "Request full (1 yea
 var wsPort = flag.String("ws-port", "8080", "WebSocket port")
 var chatLogDBAddress = flag.String("chatlog-db-address", "postgresql://local@localhost/testing?sslmode=disable", "Chat log database address")
 var dirPtr = flag.String("data-dir", "/opt/whatsapp/data", "Directory to serve files from")
+var minioEndpoint = flag.String("minio-endpoint", "localhost:9000", "Minio endpoint")
+var useSSLMinio = flag.Bool("use-ssl-minio", true, "Use SSL for Minio?")
+var minioBucket = flag.String("minio-bucket", "whatsmeow", "Minio bucket")
 
 var pairRejectChan = make(chan bool, 1)
 
 // WebSocket connection and store container
 var wsConn *websocket.Conn
 var storeContainer *sqlstore.Container
+var minioClient *minio.Client
 
 var db *sql.DB
 var qrStr string
@@ -80,7 +86,18 @@ func main() {
 		log.Errorf("Failed to get device: %v", err)
 		return
 	}
+	accessKeyID := os.Getenv("ACCESS_KEY_ID")
+	secretAccessKey := os.Getenv("SECRET_ACCESS_KEY")
 
+	minioClient, err = minio.New(*minioEndpoint, &minio.Options{
+		Creds:  credentials.NewStaticV4(accessKeyID, secretAccessKey, ""),
+		Secure: *useSSLMinio,
+	})
+
+	if err != nil {
+		log.Errorf("Failed to connect to Minio: %v", err)
+		return
+	}
 	// Serve WebSocket endpoint
 	http.HandleFunc("/ws", serveWs)
 	http.HandleFunc("/status", serveStatus)
