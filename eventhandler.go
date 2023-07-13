@@ -100,19 +100,20 @@ func handleMessage(evt *events.Message) {
 			log.Errorf("Failed to download image: %v", err)
 			return
 		}
-		exts, _ := mime.ExtensionsByType(img.GetMimetype())
-		extension = exts[0]
-		path := fmt.Sprintf("%s%s", evt.Info.ID, extension)
-		_ = os.WriteFile(path, data, 0644)
 
-		path = fmt.Sprintf("%s%s", evt.Info.ID, ".jpg")
-		err = os.WriteFile(path, img.GetJpegThumbnail(), 0644)
-
-		if err != nil {
-			log.Errorf("Failed to save image: %v", err)
+		fileName = fmt.Sprintf("%s%s", evt.Info.ID, getFileExtension(img.GetMimetype()))
+		if err := uploadFile(*minioBucket, fileName, data); err != nil {
+			log.Errorf("Failed to upload image: %v", err)
 			return
 		}
-		log.Infof("Saved image message to %s", path)
+
+		thumb := img.GetJpegThumbnail()
+		if err := uploadFile(*minioBucket, fmt.Sprintf("%s%s", evt.Info.ID, ".jpg"), thumb); err != nil {
+			log.Errorf("Failed to upload thumbnail: %v", err)
+			return
+		}
+
+		log.Infof("Uploaded image message to %s", fileName)
 	}
 
 	if doc := evt.Message.GetDocumentMessage(); doc != nil {
@@ -132,14 +133,20 @@ func handleMessage(evt *events.Message) {
 
 		fileName = doc.GetFileName()
 
-		path = fmt.Sprintf("%s%s", evt.Info.ID, ".jpg")
-		err = os.WriteFile(path, doc.GetJpegThumbnail(), 0644)
-
-		if err != nil {
-			log.Errorf("Failed to save document: %v", err)
+		if err := uploadFile(*minioBucket, fileName, data); err != nil {
+			log.Errorf("Failed to upload document: %v", err)
 			return
 		}
-		log.Infof("Saved document message to %s", path)
+
+		thumb := doc.GetJpegThumbnail()
+		if thumb != nil {
+			if err := uploadFile(*minioBucket, fmt.Sprintf("%s%s", fileName, ".jpg"), thumb); err != nil {
+				log.Errorf("Failed to upload document thumbnail: %v", err)
+				return
+			}
+		}
+
+		log.Infof("Uploaded document message: %s", fileName)
 	}
 
 	if audio := evt.Message.GetAudioMessage(); audio != nil {
@@ -148,16 +155,15 @@ func handleMessage(evt *events.Message) {
 			log.Errorf("Failed to download audio: %v", err)
 			return
 		}
-		exts, _ := mime.ExtensionsByType(audio.GetMimetype())
-		extension = exts[0]
-		path := fmt.Sprintf("%s%s", evt.Info.ID, extension)
-		err = os.WriteFile(path, data, 0644)
-		if err != nil {
-			log.Errorf("Failed to save audio: %v", err)
+
+		fileName = fmt.Sprintf("%s%s", evt.Info.ID, getFileExtension(audio.GetMimetype()))
+
+		if err := uploadFile(*minioBucket, fileName, data); err != nil {
+			log.Errorf("Failed to upload audio: %v", err)
 			return
 		}
 
-		log.Infof("Saved audio message to %s", path)
+		log.Infof("Uploaded audio message: %s", fileName)
 	}
 
 	var msgContent string
@@ -256,4 +262,9 @@ func handleKeepAliveTimeout(evt *events.KeepAliveTimeout) {
 
 func handleKeepAliveRestored(evt *events.KeepAliveRestored) {
 	log.Debugf("Keepalive restored")
+}
+
+func getFileExtension(mimeType string) string {
+	exts, _ := mime.ExtensionsByType(mimeType)
+	return exts[0]
 }

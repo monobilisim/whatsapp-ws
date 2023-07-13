@@ -34,6 +34,8 @@ github.com/minio/minio-go/v7 v7.0.60 h1:iHkrmWyHFs/eZiWc2F/5jAHtNBAFy+HjdhMX6Fkk
 github.com/minio/minio-go/v7 v7.0.60/go.mod h1:NUDy4A4oXPq1l2yK6LTSvCEzAMeIcoz9lcj5dbzSrRE=
 github.com/minio/minio-go/v7 v7.0.61 h1:87c+x8J3jxQ5VUGimV9oHdpjsAvy3fhneEBKuoKEVUI=
 github.com/minio/minio-go/v7 v7.0.61/go.mod h1:BTu8FcrEw+HidY0zd/0eny43QnVNkXRPXrLXFuQBHXg=
+github.com/minio/minio-go/v7 v7.0.60 h1:iHkrmWyHFs/eZiWc2F/5jAHtNBAFy+HjdhMX6FkkPWc=
+github.com/minio/minio-go/v7 v7.0.60/go.mod h1:NUDy4A4oXPq1l2yK6LTSvCEzAMeIcoz9lcj5dbzSrRE=
 github.com/minio/sha256-simd v1.0.1 h1:6kaan5IFmwTNynnKKpDHe6FWHohJOHhCPchzK49dzMM=
 github.com/minio/sha256-simd v1.0.1/go.mod h1:Pz6AKMiUdngCLpeTL/RJY1M9rUuPMYujV5xJjtbRSN8=
 github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421/go.mod h1:6dJC0mAP4ikYIbvyc7fijjWJddQyLn8Ig3JB5CqoB9Q=
@@ -54,16 +56,8 @@ github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
 go.mau.fi/libsignal v0.1.0 h1:vAKI/nJ5tMhdzke4cTK1fb0idJzz1JuEIpmjprueC+c=
 go.mau.fi/libsignal v0.1.0/go.mod h1:R8ovrTezxtUNzCQE5PH30StOQWWeBskBsWE55vMfY9I=
-go.mau.fi/util v0.0.0-20230805154123-3981666a86f1 h1:oZGQm7OArpQDISW7f6qu64nw+GMXiiXEhONy7Ab6RKI=
-go.mau.fi/util v0.0.0-20230805154123-3981666a86f1/go.mod h1:tNxQ2KpD+QhP2MlMfJvFSGSJfDjg4OhIwP7bIK43X/I=
-go.mau.fi/util v0.0.0-20230805171708-199bf3eec776 h1:VrxDCO/gLFHLQywGUsJzertrvt2mUEMrZPf4hEL/s18=
-go.mau.fi/util v0.0.0-20230805171708-199bf3eec776/go.mod h1:AxuJUMCxpzgJ5eV9JbPWKRH8aAJJidxetNdUj7qcb84=
-go.mau.fi/whatsmeow v0.0.0-20230710094417-93091c7024da h1:NGc2KvVc8+1zy266oB9KRYTsZE9cu7sNAr6ypySrSqs=
-go.mau.fi/whatsmeow v0.0.0-20230710094417-93091c7024da/go.mod h1:+ObGpFE6cbbY4hKc1FmQH9MVfqaemmlXGXSnwDvCOyE=
-go.mau.fi/whatsmeow v0.0.0-20230809185103-1bdbbb5766d3 h1:x3BXsTUP3dOaXKkrSpfqpeNhWABC+y+3FLXMea2MSjg=
-go.mau.fi/whatsmeow v0.0.0-20230809185103-1bdbbb5766d3/go.mod h1:Iv3G4uv6+HWtqL7XSLRa2dSy077Bnji14IvqUbG+bRo=
-go.mau.fi/whatsmeow v0.0.0-20230816173759-58beaf3b5bd0 h1:BPjAk+ndCpkg+QPUi44ACgnhdjMA5nMa5DV4bK/5kXw=
-go.mau.fi/whatsmeow v0.0.0-20230816173759-58beaf3b5bd0/go.mod h1:Iv3G4uv6+HWtqL7XSLRa2dSy077Bnji14IvqUbG+bRo=
+go.mau.fi/whatsmeow v0.0.0-20230628230045-73f143bc9874 h1:UTqyzBYGw4qdRnigWc7EcCSb8YR7jno+/qychR0MR34=
+go.mau.fi/whatsmeow v0.0.0-20230628230045-73f143bc9874/go.mod h1:+ObGpFE6cbbY4hKc1FmQH9MVfqaemmlXGXSnwDvCOyE=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/crypto v0.0.0-20210921155107-089bfa567519/go.mod h1:GvvjBRRGRdwPK5ydBHafDWAxML/pGHZbMvKqRZ5+Abc=
 golang.org/x/crypto v0.11.0 h1:6Ewdq3tDic1mg5xRO4milcWCfMVQhI4NkqWWvqejpuA=
