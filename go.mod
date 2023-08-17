@@ -8,8 +8,8 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/mattn/go-sqlite3 v1.14.17
 	github.com/mdp/qrterminal/v3 v3.1.1
-	github.com/minio/minio-go/v7 v7.0.60
-	go.mau.fi/whatsmeow v0.0.0-20230710094417-93091c7024da
+	github.com/minio/minio-go/v7 v7.0.61
+	go.mau.fi/whatsmeow v0.0.0-20230809185103-1bdbbb5766d3
 	google.golang.org/protobuf v1.31.0
 )
 
@@ -27,11 +27,12 @@ require (
 	github.com/rs/xid v1.5.0 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	go.mau.fi/libsignal v0.1.0 // indirect
-	golang.org/x/crypto v0.11.0 // indirect
-	golang.org/x/image v0.9.0 // indirect
-	golang.org/x/net v0.12.0 // indirect
-	golang.org/x/sys v0.10.0 // indirect
-	golang.org/x/text v0.11.0 // indirect
+	go.mau.fi/util v0.0.0-20230805171708-199bf3eec776 // indirect
+	golang.org/x/crypto v0.12.0 // indirect
+	golang.org/x/image v0.11.0 // indirect
+	golang.org/x/net v0.14.0 // indirect
+	golang.org/x/sys v0.11.0 // indirect
+	golang.org/x/text v0.12.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	rsc.io/qr v0.2.0 // indirect
 )
