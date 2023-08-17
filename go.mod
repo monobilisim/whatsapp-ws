@@ -9,7 +9,7 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.17
 	github.com/mdp/qrterminal/v3 v3.1.1
 	github.com/minio/minio-go/v7 v7.0.61
-	go.mau.fi/whatsmeow v0.0.0-20230809185103-1bdbbb5766d3
+	go.mau.fi/whatsmeow v0.0.0-20230816173759-58beaf3b5bd0
 	google.golang.org/protobuf v1.31.0
 )
 

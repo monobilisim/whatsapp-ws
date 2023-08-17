@@ -62,6 +62,8 @@ go.mau.fi/whatsmeow v0.0.0-20230710094417-93091c7024da h1:NGc2KvVc8+1zy266oB9KRY
 go.mau.fi/whatsmeow v0.0.0-20230710094417-93091c7024da/go.mod h1:+ObGpFE6cbbY4hKc1FmQH9MVfqaemmlXGXSnwDvCOyE=
 go.mau.fi/whatsmeow v0.0.0-20230809185103-1bdbbb5766d3 h1:x3BXsTUP3dOaXKkrSpfqpeNhWABC+y+3FLXMea2MSjg=
 go.mau.fi/whatsmeow v0.0.0-20230809185103-1bdbbb5766d3/go.mod h1:Iv3G4uv6+HWtqL7XSLRa2dSy077Bnji14IvqUbG+bRo=
+go.mau.fi/whatsmeow v0.0.0-20230816173759-58beaf3b5bd0 h1:BPjAk+ndCpkg+QPUi44ACgnhdjMA5nMa5DV4bK/5kXw=
+go.mau.fi/whatsmeow v0.0.0-20230816173759-58beaf3b5bd0/go.mod h1:Iv3G4uv6+HWtqL7XSLRa2dSy077Bnji14IvqUbG+bRo=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/crypto v0.0.0-20210921155107-089bfa567519/go.mod h1:GvvjBRRGRdwPK5ydBHafDWAxML/pGHZbMvKqRZ5+Abc=
 golang.org/x/crypto v0.11.0 h1:6Ewdq3tDic1mg5xRO4milcWCfMVQhI4NkqWWvqejpuA=

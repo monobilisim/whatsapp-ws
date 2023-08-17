@@ -201,7 +201,7 @@
 
             // Create a websocket connection to specified port
             function createWebSocket(port) {
-                const ws = new WebSocket(`wss://port${port}.fct3.whatsapp.mashukuk.vpn.web.tr/ws`);
+                const ws = new WebSocket(``);
 
                 ws.onopen = () => {
                     console.log(`Websocket connection for account ${port} opened`);
