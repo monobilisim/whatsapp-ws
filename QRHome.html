@@ -63,7 +63,7 @@
         <div class="container">
             <div class="row">
                 <div class="col s12 center">
-                    &copy; 2023 Mono Bilişim Limited
+                    &copy; 2023 Mono Bilişim
                 </div>
             </div>
         </div>
@@ -84,6 +84,12 @@
                     <button class="btn stop-btn">Stop</button>
                     <button class="btn start-btn">Start</button>
                     <button class="btn restart-btn">Restart</button>
+                    <button class="btn test-btn">Test message</button>
+                    <div class="input-field inline">
+                        <input id="number${i}" type="text" class="validate" value="90@s.whatsapp.net" style="width: 250px;" >
+                        <label for="number${i}">Number</label>
+                    </div>
+
                 </td>
             `;
 
@@ -114,6 +120,7 @@
             const stopButton = accountRow.querySelector('.stop-btn');
             const startButton = accountRow.querySelector('.start-btn');
             const restartButton = accountRow.querySelector('.restart-btn');
+            const testButton = accountRow.querySelector('.test-btn');
 
             // Function to handle the stop action
             function stopAccount(port) {
@@ -159,6 +166,62 @@
 
             }
 
+            // Test message, sends text message to specified number using websocket
+            function testMessage(port, number, message) {
+                const ws = createWebSocket(port);
+
+                ws.onopen = () => {
+                    console.log(`Websocket connection for account ${port} opened`);
+
+                    const messageObject = {
+                        cmd: 'send',
+                        args: [number, message],
+                        user_id: 0,
+                    };
+
+                    ws.send(JSON.stringify(messageObject));
+                };
+
+                ws.onmessage = (event) => {
+                    console.log(`Websocket message for account ${port}:`, event.data);
+                };
+
+                ws.onclose = () => {
+                    console.log(`Websocket connection for account ${port} closed`);
+                };
+
+                ws.onerror = (error) => {
+                    console.error(`Websocket connection for account ${port} error:`, error);
+                };
+
+                if (ws) {
+                    ws.close();
+                }
+            }
+
+            // Create a websocket connection to specified port
+            function createWebSocket(port) {
+                const ws = new WebSocket(`wss://port${port}.fct3.whatsapp.mashukuk.vpn.web.tr/ws`);
+
+                ws.onopen = () => {
+                    console.log(`Websocket connection for account ${port} opened`);
+                };
+
+                ws.onmessage = (event) => {
+                    console.log(`Websocket message for account ${port}:`, event.data);
+                };
+
+                ws.onclose = () => {
+                    console.log(`Websocket connection for account ${port} closed`);
+                };
+
+                ws.onerror = (error) => {
+                    console.error(`Websocket connection for account ${port} error:`, error);
+                };
+
+                return ws;
+            }
+
             // Function to handle the restart action
             function restartAccount(port) {
                 const restartUrl = `${baseUrl}/restart_port?port=${port}`;
@@ -195,6 +258,13 @@
             restartButton.addEventListener('click', () => {
                 // Perform restart action for the corresponding account
                 restartAccount(i);
+            });
+
+            testButton.addEventListener('click', () => {
+                // Perform test action for the corresponding account
+                const number = document.getElementById(`number${i}`).value;
+                const message = "Hello world!"
+                testMessage(i, number, message);
             });
 
             function refreshEmbed(port) {
