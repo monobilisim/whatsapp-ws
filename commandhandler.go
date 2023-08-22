@@ -140,11 +140,23 @@ func handleSendImage(JID string, caption string, userID int, data []byte) (strin
 
 	log.Infof("Image message sent (server timestamp: %s)", resp.Timestamp)
 
-	if err := insertMessages(resp.ID, cli.Store.ID.String(), recipient.String(), "image", caption, resp.Timestamp, true, "", "", userID); err != nil {
+	exts, err := mime.ExtensionsByType(msg.GetImageMessage().GetMimetype())
+
+	if err != nil {
+		return "", fmt.Errorf("error getting file extension: %v", err)
+	}
+
+	if len(exts) == 0 {
+		return "", fmt.Errorf("no file extension found for mimetype: %s", msg.GetImageMessage().GetMimetype())
+	}
+
+	ext := exts[0]
+
+	if err := insertMessages(resp.ID, cli.Store.ID.String(), recipient.String(), caption, "media", resp.Timestamp, true, ext, "", userID); err != nil {
 		return "", fmt.Errorf("error inserting into messages: %v", err)
 	}
 
-	if err := insertLastMessages(resp.ID, cli.Store.ID.String(), recipient.String(), "image", caption, resp.Timestamp, true, "", "", userID); err != nil {
+	if err := insertLastMessages(resp.ID, cli.Store.ID.String(), recipient.String(), caption, "media", resp.Timestamp, true, ext, "", userID); err != nil {
 		return "", fmt.Errorf("error inserting into last_messages: %v", err)
 	}
 
@@ -172,11 +184,23 @@ func handleSendDocument(JID string, caption string, userID int, data []byte) (st
 
 	log.Infof("Document message sent (server timestamp: %s)", resp.Timestamp)
 
-	if err := insertMessages(resp.ID, cli.Store.ID.String(), recipient.String(), "document", caption, resp.Timestamp, true, "", "", userID); err != nil {
+	exts, err := mime.ExtensionsByType(msg.GetDocumentMessage().GetMimetype())
+
+	if err != nil {
+		return "", fmt.Errorf("error getting file extension: %v", err)
+	}
+
+	if len(exts) == 0 {
+		return "", fmt.Errorf("no file extension found for mimetype: %s", msg.GetDocumentMessage().GetMimetype())
+	}
+
+	ext := exts[0]
+
+	if err := insertMessages(resp.ID, cli.Store.ID.String(), recipient.String(), caption, "media", resp.Timestamp, true, ext, "", userID); err != nil {
 		return "", fmt.Errorf("error inserting into messages: %v", err)
 	}
 
-	if err := insertLastMessages(resp.ID, cli.Store.ID.String(), recipient.String(), "document", caption, resp.Timestamp, true, "", "", userID); err != nil {
+	if err := insertLastMessages(resp.ID, cli.Store.ID.String(), recipient.String(), caption, "media", resp.Timestamp, true, ext, "", userID); err != nil {
 		return "", fmt.Errorf("error inserting into last_messages: %v", err)
 	}
 

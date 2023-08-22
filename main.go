@@ -34,27 +34,23 @@ import (
 	waLog "go.mau.fi/whatsmeow/util/log"
 )
 
-var cli *whatsmeow.Client
-var log waLog.Logger
-
-var logLevel = "INFO"
-var debugLogs = flag.Bool("debug", false, "Enable debug logs?")
-var dbDialect = flag.String("db-dialect", "sqlite3", "Database dialect (sqlite3 or postgres)")
-
-var dbAddress = flag.String("db-address", "file:mdtest.db?sslmode=disable", "Database address")
-var requestFullSync = flag.Bool("request-full-sync", false, "Request full (1 year) history sync when logging in?")
-var wsPort = flag.String("ws-port", "8080", "WebSocket port")
-var chatLogDBAddress = flag.String("chatlog-db-address", "postgresql://local@localhost/testing?sslmode=disable", "Chat log database address")
-var dirPtr = flag.String("data-dir", "/opt/whatsapp/data", "Directory to serve files from")
-
-var pairRejectChan = make(chan bool, 1)
-
-// WebSocket connection and store container
-var wsConn *websocket.Conn
-var storeContainer *sqlstore.Container
-
-var db *sql.DB
-var qrStr string
+var (
+	cli              *whatsmeow.Client                                                                                                        // Client instance
+	log              waLog.Logger                                                                                                             // Logger instance
+	logLevel         = "INFO"                                                                                                                 // Log level
+	debugLogs        = flag.Bool("debug", false, "Enable debug logs?")                                                                        // Enable debug logs
+	dbDialect        = flag.String("db-dialect", "sqlite3", "Database dialect (sqlite3 or postgres)")                                         // Session database dialect
+	dbAddress        = flag.String("db-address", "file:mdtest.db?sslmode=disable", "Database address")                                        // Session database address
+	requestFullSync  = flag.Bool("request-full-sync", false, "Request full (1 year) history sync when logging in?")                           // Request full history sync when logging in
+	wsPort           = flag.String("ws-port", "8080", "WebSocket port")                                                                       // WebSocket port
+	chatLogDBAddress = flag.String("chatlog-db-address", "postgresql://local@localhost/testing?sslmode=disable", "Chat log database address") // Chat log database address
+	dirPtr           = flag.String("data-dir", "/opt/whatsapp/data", "Directory to serve files from")                                         // Directory to serve files from
+	pairRejectChan   = make(chan bool, 1)                                                                                                     // Pair reject channel
+	wsConn           *websocket.Conn                                                                                                          // WebSocket connection
+	storeContainer   *sqlstore.Container                                                                                                      // Session database container
+	db               *sql.DB                                                                                                                  // Chat log database
+	qrStr            string                                                                                                                   // QR code string
+)
 
 func main() {
 	waBinary.IndentXML = true

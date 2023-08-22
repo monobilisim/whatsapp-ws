@@ -161,33 +161,38 @@ func handleMessage(evt *events.Message) {
 	}
 
 	var msgContent string
-
+	var msgType string
 	switch {
 	case evt.Message.GetConversation() != "":
 		msgContent = evt.Message.GetConversation()
+		msgType = "text"
 	case evt.Message.GetExtendedTextMessage() != nil:
 		msgContent = evt.Message.GetExtendedTextMessage().GetText()
+		msgType = "text"
 	case evt.Message.GetImageMessage() != nil:
 		msgContent = evt.Message.GetImageMessage().GetCaption()
+		msgType = "media"
 	case evt.Message.GetDocumentMessage() != nil:
 		msgContent = evt.Message.GetDocumentMessage().GetCaption()
+		msgType = "media"
 	case evt.Message.GetVideoMessage() != nil:
 		msgContent = evt.Message.GetVideoMessage().GetCaption()
+		msgType = "media"
 	}
 
 	remoteJid := evt.Info.MessageSource.Chat.String()
 
-	if evt.Info.Category == "peer" {
+	if evt.Info.Category == "peer" || remoteJid == "status@broadcast" || remoteJid == "broadcast" || remoteJid == "broadcast@broadcast" {
 		// Bunlar ilk login olunduğunda alınan sistem mesajları, veritabanına yazmayalım.
-		// Örn: [Main INFO] Received message 469474B7AB6166188B238F2AD94F5A65 from 905015301816@s.whatsapp.net (pushname: MAS Hukuk, timestamp: 2023-06-21 12:16:33 +0300 +03, type: text, category: peer): protocolMessage:{type:INITIAL_SECURITY_NOTIFICATION_SETTING_SYNC initialSecurityNotificationSettingSync:{securityNotificationEnabled:false}}
+		// Örn: [Main INFO] Received message xxxxxxxxxxxxxxxxxxxxxxxxxxxxx from xxxxxxxxx@s.whatsapp.net (pushname: xxxxxx, timestamp: 2023-06-21 12:16:33 +0300 +03, type: text, category: peer): protocolMessage:{type:INITIAL_SECURITY_NOTIFICATION_SETTING_SYNC initialSecurityNotificationSettingSync:{securityNotificationEnabled:false}}
 		return
 	}
 
-	if err := insertMessages(evt.Info.ID, cli.Store.ID.String(), remoteJid, evt.Info.Type, msgContent, evt.Info.Timestamp, evt.Info.MessageSource.IsFromMe, extension, fileName, -1); err != nil {
+	if err := insertMessages(evt.Info.ID, cli.Store.ID.String(), remoteJid, msgContent, msgType, evt.Info.Timestamp, evt.Info.MessageSource.IsFromMe, extension, fileName, -1); err != nil {
 		log.Errorf("Error inserting into messages: %v", err)
 	}
 
-	if err := insertLastMessages(evt.Info.ID, cli.Store.ID.String(), remoteJid, evt.Info.Type, msgContent, evt.Info.Timestamp, evt.Info.MessageSource.IsFromMe, extension, fileName, -1); err != nil {
+	if err := insertLastMessages(evt.Info.ID, cli.Store.ID.String(), remoteJid, msgContent, msgType, evt.Info.Timestamp, evt.Info.MessageSource.IsFromMe, extension, fileName, -1); err != nil {
 		log.Errorf("Error inserting into last_messages: %v", err)
 	}
 
