@@ -75,16 +75,16 @@ func handleSendTextMessage(args []string, userID int) {
 
 	log.Infof("Message sent (server timestamp: %s)", resp.Timestamp)
 
-	if err := insertMessages(resp.ID, cli.Store.ID.String(), recipient.String(), "text", msg.GetConversation(), resp.Timestamp, true, "", "", userID); err != nil {
+	if err := insertMessages(resp.ID, cli.Store.ID.String(), recipient.String(), msg.GetConversation(), "text", resp.Timestamp, true, "", userID); err != nil {
 		log.Errorf("Error inserting into messages: %v", err)
 	}
 
-	if err := insertLastMessages(resp.ID, cli.Store.ID.String(), recipient.String(), "text", msg.GetConversation(), resp.Timestamp, true, "", "", userID); err != nil {
+	if err := insertLastMessages(resp.ID, cli.Store.ID.String(), recipient.String(), msg.GetConversation(), "text", resp.Timestamp, true, "", userID); err != nil {
 		log.Errorf("Error inserting into last_messages: %v", err)
 	}
 
 	if wsConn != nil {
-		m := Message{resp.ID, recipient.String(), msg.GetConversation(), true}
+		m := Message{resp.ID, recipient.String(), "text", msg.GetConversation(), true, ""}
 		wsConn.WriteJSON(m)
 	}
 }
@@ -121,91 +121,78 @@ func handleMarkRead(args []string) {
 	}
 }
 
-func handleSendImage(JID string, caption string, userID int, data []byte) (string, error) {
+func handleSendImage(JID string, userID int, data []byte) error {
 	recipient, ok := parseJID(JID)
 	if !ok {
-		return "", fmt.Errorf("invalid JID")
+		return fmt.Errorf("invalid JID")
 	}
 
 	uploaded, err := cli.Upload(context.Background(), data, whatsmeow.MediaImage)
 	if err != nil {
-		return "", fmt.Errorf("failed to upload file: %v", err)
+		return fmt.Errorf("failed to upload file: %v", err)
 	}
 
-	msg := createImageMessage(caption, uploaded, &data)
+	msg := createImageMessage(uploaded, &data)
 	resp, err := cli.SendMessage(context.Background(), recipient, msg)
 	if err != nil {
-		return "", fmt.Errorf("error sending image message: %v", err)
+		return fmt.Errorf("error sending image message: %v", err)
 	}
 
 	log.Infof("Image message sent (server timestamp: %s)", resp.Timestamp)
 
-	exts, err := mime.ExtensionsByType(msg.GetImageMessage().GetMimetype())
-
-	if err != nil {
-		return "", fmt.Errorf("error getting file extension: %v", err)
+	if err := insertMessages(resp.ID, cli.Store.ID.String(), recipient.String(), "", "media", resp.Timestamp, true, "", userID); err != nil {
+		return fmt.Errorf("error inserting into messages: %v", err)
 	}
 
-	if len(exts) == 0 {
-		return "", fmt.Errorf("no file extension found for mimetype: %s", msg.GetImageMessage().GetMimetype())
+	if err := insertLastMessages(resp.ID, cli.Store.ID.String(), recipient.String(), "", "media", resp.Timestamp, true, "", userID); err != nil {
+		return fmt.Errorf("error inserting into last_messages: %v", err)
 	}
 
-	ext := exts[0]
-
-	if err := insertMessages(resp.ID, cli.Store.ID.String(), recipient.String(), caption, "media", resp.Timestamp, true, ext, "", userID); err != nil {
-		return "", fmt.Errorf("error inserting into messages: %v", err)
-	}
-
-	if err := insertLastMessages(resp.ID, cli.Store.ID.String(), recipient.String(), caption, "media", resp.Timestamp, true, ext, "", userID); err != nil {
-		return "", fmt.Errorf("error inserting into last_messages: %v", err)
-	}
-
-	// Save image to disk
 	saveImageToDisk(msg, data, resp.ID)
-	return resp.ID, nil
+
+	if wsConn != nil {
+		m := Message{resp.ID, recipient.String(), "media", "", true, ""}
+		wsConn.WriteJSON(m)
+	}
+
+	return nil
 }
 
-func handleSendDocument(JID string, caption string, userID int, data []byte) (string, error) {
+func handleSendDocument(JID string, fileName string, userID int, data []byte) error {
 	recipient, ok := parseJID(JID)
 	if !ok {
-		return "", fmt.Errorf("invalid JID")
+		return fmt.Errorf("invalid JID")
 	}
 
 	uploaded, err := cli.Upload(context.Background(), data, whatsmeow.MediaDocument)
 	if err != nil {
-		return "", fmt.Errorf("failed to upload file: %v", err)
+		return fmt.Errorf("failed to upload file: %v", err)
 	}
 
-	msg := createDocumentMessage(caption, uploaded, &data)
+	msg := createDocumentMessage(fileName, uploaded, &data)
 	resp, err := cli.SendMessage(context.Background(), recipient, msg)
 	if err != nil {
-		return "", fmt.Errorf("error sending document message: %v", err)
+		return fmt.Errorf("error sending document message: %v", err)
 	}
 
 	log.Infof("Document message sent (server timestamp: %s)", resp.Timestamp)
 
-	exts, err := mime.ExtensionsByType(msg.GetDocumentMessage().GetMimetype())
-
-	if err != nil {
-		return "", fmt.Errorf("error getting file extension: %v", err)
+	if err := insertMessages(resp.ID, cli.Store.ID.String(), recipient.String(), "", "media", resp.Timestamp, true, fileName, userID); err != nil {
+		return fmt.Errorf("error inserting into messages: %v", err)
 	}
 
-	if len(exts) == 0 {
-		return "", fmt.Errorf("no file extension found for mimetype: %s", msg.GetDocumentMessage().GetMimetype())
-	}
-
-	ext := exts[0]
-
-	if err := insertMessages(resp.ID, cli.Store.ID.String(), recipient.String(), caption, "media", resp.Timestamp, true, ext, "", userID); err != nil {
-		return "", fmt.Errorf("error inserting into messages: %v", err)
-	}
-
-	if err := insertLastMessages(resp.ID, cli.Store.ID.String(), recipient.String(), caption, "media", resp.Timestamp, true, ext, "", userID); err != nil {
-		return "", fmt.Errorf("error inserting into last_messages: %v", err)
+	if err := insertLastMessages(resp.ID, cli.Store.ID.String(), recipient.String(), "", "media", resp.Timestamp, true, fileName, userID); err != nil {
+		return fmt.Errorf("error inserting into last_messages: %v", err)
 	}
 
 	saveDocumentToDisk(msg, data, resp.ID)
-	return resp.ID, nil
+
+	if wsConn != nil {
+		m := Message{resp.ID, recipient.String(), "media", "", true, fileName}
+		wsConn.WriteJSON(m)
+	}
+
+	return nil
 }
 
 func saveImageToDisk(msg *waProto.Message, data []byte, ID string) {
@@ -272,10 +259,9 @@ func saveDocumentToDisk(msg *waProto.Message, data []byte, ID string) {
 	log.Infof("Saved file to %s", path)
 }
 
-func createImageMessage(caption string, uploaded whatsmeow.UploadResponse, data *[]byte) *waProto.Message {
+func createImageMessage(uploaded whatsmeow.UploadResponse, data *[]byte) *waProto.Message {
 	return &waProto.Message{
 		ImageMessage: &waProto.ImageMessage{
-			Caption:       proto.String(caption),
 			Url:           proto.String(uploaded.URL),
 			DirectPath:    proto.String(uploaded.DirectPath),
 			MediaKey:      uploaded.MediaKey,
@@ -287,10 +273,10 @@ func createImageMessage(caption string, uploaded whatsmeow.UploadResponse, data 
 	}
 }
 
-func createDocumentMessage(caption string, uploaded whatsmeow.UploadResponse, data *[]byte) *waProto.Message {
+func createDocumentMessage(fileName string, uploaded whatsmeow.UploadResponse, data *[]byte) *waProto.Message {
 	return &waProto.Message{
 		DocumentMessage: &waProto.DocumentMessage{
-			Caption:       proto.String(caption),
+			FileName:      proto.String(fileName),
 			Url:           proto.String(uploaded.URL),
 			DirectPath:    proto.String(uploaded.DirectPath),
 			MediaKey:      uploaded.MediaKey,

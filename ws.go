@@ -4,7 +4,6 @@ import (
 	"io"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/gorilla/websocket"
 	"github.com/mdp/qrterminal/v3"
@@ -112,15 +111,14 @@ func uploadHandler(w http.ResponseWriter, r *http.Request, uploadDir string) {
 
 	mimeType := http.DetectContentType(data)
 
-	var responseID string
-	if strings.HasPrefix(mimeType, "image/") {
-		responseID, err = handleSendImage(JID, handler.Filename, userID, data)
+	if mimeType == "image/jpeg" {
+		err = handleSendImage(JID, userID, data)
 		if err != nil {
 			handleError(w, http.StatusInternalServerError, "Failed to handle image upload", err)
 			return
 		}
 	} else {
-		responseID, err = handleSendDocument(JID, handler.Filename, userID, data)
+		err = handleSendDocument(JID, handler.Filename, userID, data)
 		if err != nil {
 			handleError(w, http.StatusInternalServerError, "Failed to handle document upload", err)
 			return
@@ -129,7 +127,6 @@ func uploadHandler(w http.ResponseWriter, r *http.Request, uploadDir string) {
 
 	log.Infof("Uploaded file %s to %s, mimetype: %s", handler.Filename, JID, mimeType)
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(responseID))
 }
 
 func handleError(w http.ResponseWriter, statusCode int, message string, err error) {

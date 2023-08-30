@@ -10,8 +10,10 @@ import (
 type Message struct {
 	MessageID string
 	Jid       string
+	Type      string
 	Body      string
 	Sent      bool
+	FileName  string
 }
 
 func handleCmd(command Command) {

@@ -6,7 +6,7 @@ import (
 )
 
 // InsertMessageHistory inserts a message history record into the database.
-func insertMessages(messageID, deviceJID, remoteJID, messageContent, messageType string, timestamp time.Time, sent bool, extension string, fileName string, userIDInteger int) error {
+func insertMessages(messageID, deviceJID, remoteJID, messageContent, messageType string, timestamp time.Time, sent bool, fileName string, userIDInteger int) error {
 	var userID *int
 	if userIDInteger == -1 {
 		userID = nil
@@ -14,9 +14,9 @@ func insertMessages(messageID, deviceJID, remoteJID, messageContent, messageType
 		userID = &userIDInteger
 	}
 	_, err := db.Exec(`
-		INSERT INTO messages (message_id, device_jid, remote_jid, type, content, timestamp, sent, extension, file_name, user_id)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-    `, messageID, deviceJID, remoteJID, messageType, messageContent, timestamp, sent, extension, fileName, userID)
+		INSERT INTO messages (message_id, device_jid, remote_jid, type, content, timestamp, sent, file_name, user_id)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    `, messageID, deviceJID, remoteJID, messageType, messageContent, timestamp, sent, fileName, userID)
 	if err != nil {
 		return fmt.Errorf("%w", err)
 	}
@@ -25,7 +25,7 @@ func insertMessages(messageID, deviceJID, remoteJID, messageContent, messageType
 }
 
 // InsertOrUpdateLastMessage inserts or updates the last message for a remote JID in the database.
-func insertLastMessages(messageID, deviceJID, remoteJID, messageContent, messageType string, timestamp time.Time, sent bool, extension string, fileName string, userIDInteger int) error {
+func insertLastMessages(messageID, deviceJID, remoteJID, messageContent, messageType string, timestamp time.Time, sent bool, fileName string, userIDInteger int) error {
 	var userID *int
 	if userIDInteger == -1 {
 		userID = nil
@@ -33,11 +33,11 @@ func insertLastMessages(messageID, deviceJID, remoteJID, messageContent, message
 		userID = &userIDInteger
 	}
 	_, err := db.Exec(`
-		INSERT INTO last_messages (message_id, device_jid, remote_jid, type, content, timestamp, sent, extension, file_name, user_id)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+		INSERT INTO last_messages (message_id, device_jid, remote_jid, type, content, timestamp, sent, file_name, user_id)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 		ON CONFLICT (remote_jid)
-		DO UPDATE SET message_id = $1, device_jid = $2, type = $4, content = $5, timestamp = $6, sent = $7, extension = $8, file_name = $9, user_id = $10
-	`, messageID, deviceJID, remoteJID, messageType, messageContent, timestamp, sent, extension, fileName, userID)
+		DO UPDATE SET message_id = $1, device_jid = $2, type = $4, content = $5, timestamp = $6, sent = $7, file_name = $8, user_id = $9
+	`, messageID, deviceJID, remoteJID, messageType, messageContent, timestamp, sent, fileName, userID)
 	if err != nil {
 		return fmt.Errorf("%w", err)
 	}
