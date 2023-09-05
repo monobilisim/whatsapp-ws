@@ -21,46 +21,42 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/mdp/qrterminal/v3"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
-	"google.golang.org/protobuf/proto"
-
 	"go.mau.fi/whatsmeow"
 	waBinary "go.mau.fi/whatsmeow/binary"
 	"go.mau.fi/whatsmeow/store"
 	"go.mau.fi/whatsmeow/store/sqlstore"
 	"go.mau.fi/whatsmeow/types"
 	waLog "go.mau.fi/whatsmeow/util/log"
+	"google.golang.org/protobuf/proto"
 )
 
-var cli *whatsmeow.Client
-var log waLog.Logger
-
-var logLevel = "INFO"
-var debugLogs = flag.Bool("debug", false, "Enable debug logs?")
-var dbDialect = flag.String("db-dialect", "sqlite3", "Database dialect (sqlite3 or postgres)")
-
-var dbAddress = flag.String("db-address", "file:mdtest.db?sslmode=disable", "Database address")
-var requestFullSync = flag.Bool("request-full-sync", false, "Request full (1 year) history sync when logging in?")
-var wsPort = flag.String("ws-port", "8080", "WebSocket port")
-var chatLogDBAddress = flag.String("chatlog-db-address", "postgresql://local@localhost/testing?sslmode=disable", "Chat log database address")
-var dirPtr = flag.String("data-dir", "/opt/whatsapp/data", "Directory to serve files from")
-var minioEndpoint = flag.String("minio-endpoint", "localhost:9000", "Minio endpoint")
-var useSSLMinio = flag.Bool("use-ssl-minio", true, "Use SSL for Minio?")
-var minioBucket = flag.String("minio-bucket", "whatsmeow", "Minio bucket")
-
-var pairRejectChan = make(chan bool, 1)
-
-// WebSocket connection and store container
-var wsConn *websocket.Conn
-var storeContainer *sqlstore.Container
-var minioClient *minio.Client
-
-var db *sql.DB
-var qrStr string
+var (
+	cli              *whatsmeow.Client
+	log              waLog.Logger
+	logLevel         = "INFO"
+	debugLogs        = flag.Bool("debug", false, "Enable debug logs?")
+	dbDialect        = flag.String("db-dialect", "sqlite3", "Database dialect (sqlite3 or postgres)")
+	dbAddress        = flag.String("db-address", "file:mdtest.db?sslmode=disable", "Database address")
+	requestFullSync  = flag.Bool("request-full-sync", false, "Request full (1 year) history sync when logging in?")
+	wsPort           = flag.String("ws-port", "8080", "WebSocket port")
+	chatLogDBAddress = flag.String("chatlog-db-address", "postgresql://local@localhost/testing?sslmode=disable", "Chat log database address")
+	dirPtr           = flag.String("data-dir", "/opt/whatsapp/data", "Directory to serve files from")
+	minioEndpoint    = flag.String("minio-endpoint", "localhost:9000", "Minio endpoint")
+	useSSLMinio      = flag.Bool("use-ssl-minio", true, "Use SSL for Minio?")
+	minioBucket      = flag.String("minio-bucket", "whatsmeow", "Minio bucket")
+	pairRejectChan   = make(chan bool, 1)
+	wsConn           *websocket.Conn
+	storeContainer   *sqlstore.Container
+	minioClient      *minio.Client
+	db               *sql.DB
+	qrStr            string
+)
 
 func main() {
 	waBinary.IndentXML = true
@@ -86,9 +82,18 @@ func main() {
 		log.Errorf("Failed to get device: %v", err)
 		return
 	}
+	err = godotenv.Load("../credentials.env")
+
+	if err != nil {
+		log.Errorf("Error loading .env file")
+	}
+
 	accessKeyID := os.Getenv("ACCESS_KEY_ID")
 	secretAccessKey := os.Getenv("SECRET_ACCESS_KEY")
+	*minioEndpoint = os.Getenv("MINIO_ENDPOINT")
 
+	log.Infof("Connecting to Minio")
+	log.Infof("Endpoint: %s", *minioEndpoint)
 	minioClient, err = minio.New(*minioEndpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(accessKeyID, secretAccessKey, ""),
 		Secure: *useSSLMinio,

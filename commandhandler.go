@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"mime"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -254,9 +253,8 @@ func saveDocument(msg *waProto.Message, data []byte, ID string) {
 	extension := exts[0]
 	path := fmt.Sprintf("%s%s", ID, extension)
 
-	err = os.WriteFile(path, data, 0644)
-	if err != nil {
-		log.Errorf("Error saving file to disk: %v", err)
+	if err := uploadFile(*minioBucket, path, data); err != nil {
+		log.Errorf("Error uploading document: %v", err)
 		return
 	}
 
