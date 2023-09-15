@@ -53,11 +53,11 @@ func handleMessage(evt *events.Message) {
 	if evt.IsViewOnce {
 		metaParts = append(metaParts, "view once")
 	}
-	if evt.IsViewOnce {
+	if evt.IsEphemeral {
 		metaParts = append(metaParts, "ephemeral")
 	}
 	if evt.IsViewOnceV2 {
-		metaParts = append(metaParts, "ephemeral (v2)")
+		metaParts = append(metaParts, "view once (v2)")
 	}
 	if evt.IsDocumentWithCaption {
 		metaParts = append(metaParts, "document with caption")
@@ -114,7 +114,6 @@ func handleMessage(evt *events.Message) {
 		}
 		log.Infof("Saved image message to %s", path)
 	}
-
 	if doc := evt.Message.GetDocumentMessage(); doc != nil {
 		data, err := cli.Download(doc)
 		if err != nil {
